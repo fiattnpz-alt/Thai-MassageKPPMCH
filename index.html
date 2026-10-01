@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>จองคิวนวดแผนไทย & นัดหมายออนไลน์</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- LINE LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Hero Header -->
+    <header class="hero-header">
+      <div class="brand-badge">🌿 ภูมิปัญญาไทยเพื่อสุขภาพ</div>
+      <h1 class="brand-title" id="shopTitle">คลินิกแพทย์แผนไทย</h1>
+      
+      <!-- LINE User Info Card -->
+      <div class="user-welcome" id="userProfileBox">
+        <img src="https://via.placeholder.com/40" alt="Avatar" class="user-avatar" id="userAvatar">
+        <div class="user-info-text">
+          <div style="font-size: 11px; opacity: 0.85;">ยินดีต้อนรับ</div>
+          <div class="user-name" id="userName">กำลังโหลดโปรไฟล์...</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <div class="tab-navigation">
+      <button class="tab-btn active" id="tabBooking" onclick="switchMainTab('booking')">📅 จองคิวใหม่</button>
+      <button class="tab-btn" id="tabHistory" onclick="switchMainTab('history')">📋 คิวของฉัน</button>
+    </div>
+
+    <!-- VIEW 1: BOOKING FLOW -->
+    <div id="bookingFlowContainer">
+      <!-- Step Indicator -->
+      <div class="step-progress">
+        <div class="step-item active" id="stepIndicator1">
+          <div class="step-circle">1</div>
+          <span>บริการ</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" id="stepIndicator2">
+          <div class="step-circle">2</div>
+          <span>หมอนวด</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" id="stepIndicator3">
+          <div class="step-circle">3</div>
+          <span>วัน/เวลา</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" id="stepIndicator4">
+          <div class="step-circle">4</div>
+          <span>ยืนยัน</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Select Service -->
+      <div class="view-content" id="step1View">
+        <h2 class="section-title">✨ เลือกบริการนวด / หัตถการ</h2>
+        <div class="services-list" id="servicesList">
+          <div style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายการบริการ...</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Select Doctor -->
+      <div class="view-content" id="step2View" style="display: none;">
+        <h2 class="section-title">💆‍♂️ เลือกหมอนวดผู้เชี่ยวชาญ</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+          สามารถเลือกหมอที่คุณชื่นชอบ หรือเลือก "ใครก็ได้" เพื่อให้ระบบเลือกหมอที่ว่างให้ครับ
+        </p>
+        <div class="doctors-grid" id="doctorsGrid"></div>
+      </div>
+
+      <!-- Step 3: Select Date & Time Slot -->
+      <div class="view-content" id="step3View" style="display: none;">
+        <h2 class="section-title">📅 เลือกวันและรอบเวลา</h2>
+        <div class="date-selector-wrapper">
+          <label class="form-label">วันที่ต้องการนัดหมาย:</label>
+          <input type="date" class="input-date" id="bookingDateInput" onchange="onDateChanged()">
+        </div>
+        <h3 class="section-title" style="font-size: 14px; margin-top: 14px;">⏰ รอบเวลาที่ว่างจริง:</h3>
+        <div class="slots-grid" id="slotsGrid">
+          <div style="grid-column: span 3; text-align: center; padding: 20px; font-size: 13px; color: var(--text-muted);">
+            กรุณาเลือกวันที่ด้านบน
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Customer Details & Confirmation -->
+      <div class="view-content" id="step4View" style="display: none;">
+        <h2 class="section-title">📝 ตรวจสอบและยืนยันนัดหมาย</h2>
+        
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">บริการ:</span>
+            <span class="summary-val" id="summaryService">-</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">หมอนวด:</span>
+            <span class="summary-val" id="summaryDoctor">-</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">วันที่:</span>
+            <span class="summary-val" id="summaryDate">-</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">เวลา:</span>
+            <span class="summary-val" id="summaryTime">-</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">ราคา:</span>
+            <span class="summary-val" id="summaryPrice" style="color: var(--gold); font-size: 16px;">-</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ชื่อ - นามสกุล ผู้รับบริการ *</label>
+          <input type="text" class="form-input" id="custNameInput" placeholder="เช่น สมชาย ใจดี">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">เบอร์โทรศัพท์ติดต่อ *</label>
+          <input type="tel" class="form-input" id="custPhoneInput" placeholder="08xxxxxxxx" maxlength="10">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">อาการเบื้องต้น / บริเวณที่ต้องการเน้น (ถ้ามี)</label>
+          <input type="text" class="form-input" id="custNotesInput" placeholder="เช่น เน้นบ่าไหล่ตึง, ไม่เอาคอ">
+        </div>
+      </div>
+
+      <!-- Bottom Navigation Buttons -->
+      <div class="bottom-bar" id="bottomActionBar">
+        <button class="btn btn-secondary" id="btnBack" onclick="prevStep()" style="display: none;">ย้อนกลับ</button>
+        <button class="btn btn-primary" id="btnNext" onclick="nextStep()" disabled>ถัดไป</button>
+      </div>
+    </div>
+
+    <!-- VIEW 2: MY BOOKINGS (HISTORY) -->
+    <div class="view-content" id="historyViewContainer" style="display: none; padding-top: 16px;">
+      <h2 class="section-title">📋 รายการนัดหมายของคุณ</h2>
+      <div id="myBookingsList">
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+          กำลังโหลดประวัติการจอง...
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="loading-overlay" id="successModal">
+      <div style="background: #ffffff; padding: 24px; border-radius: 20px; width: 85%; max-width: 340px; text-align: center; box-shadow: var(--shadow-md);">
+        <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+        <h3 style="color: var(--primary-dark); font-size: 18px; margin-bottom: 8px;">จองคิวสำเร็จแล้ว!</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          รหัสจอง: <b id="successBookingId" style="color: var(--primary);">-</b><br>
+          ระบบได้ส่งใบยืนยัน (Flex Message) เข้า LINE ของคุณเรียบร้อยแล้ว
+        </p>
+        <button class="btn btn-primary" style="width: 100%;" onclick="closeSuccessAndGoHistory()">ดูคิวของฉัน</button>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner"></div>
+      <div style="font-size: 14px; font-weight: 500; color: var(--primary);" id="loadingText">กำลังประมวลผล...</div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดการคิวนัดหมาย (สำหรับแอดมิน / หน้าร้าน)</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      max-width: 100%;
+      background: #f4f6f8;
+      padding-bottom: 20px;
+    }
+    .admin-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 16px 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .doc-column {
+      background: #ffffff;
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      border-top: 4px solid var(--primary);
+    }
+    .doc-column-title {
+      font-weight: 700;
+      color: var(--primary-dark);
+      font-size: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .admin-booking-item {
+      background: #fafbfc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .status-select {
+      width: 100%;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+    <div class="admin-header">
+      <div>
+        <h1 style="font-size: 20px; color: var(--primary-dark); font-weight: 700;">💆‍♂️ แดชบอร์ดจัดการคิวร้านนวด (หมอ 12 คน)</h1>
+        <div style="font-size: 13px; color: var(--text-muted);">ดูตารางงานรายวัน และอัปเดตสถานะลูกค้าหน้าร้าน</div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <label style="font-weight: 600; font-size: 14px;">เลือกวันที่:</label>
+        <input type="date" id="adminDateInput" class="input-date" style="width: auto; padding: 8px 12px;" onchange="loadAdminDayView()">
+        <button class="btn btn-primary" onclick="loadAdminDayView()" style="padding: 8px 16px; font-size: 13px;">🔄 รีเฟรช</button>
+      </div>
+    </div>
+
+    <!-- Doctors Timeline Columns -->
+    <div class="timeline-grid" id="doctorsTimelineGrid">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted);">
+        กำลังโหลดตารางคิว...
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("adminDateInput").value = today;
+      loadAdminDayView();
+    });
+
+    async function loadAdminDayView() {
+      const date = document.getElementById("adminDateInput").value;
+      const grid = document.getElementById("doctorsTimelineGrid");
+      grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted);">กำลังโหลดข้อมูลวันที่ ${date}...</div>`;
+
+      if (!CONFIG.API_URL || CONFIG.API_URL.startsWith("ใส่_")) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; background: #fff8e7; border: 1px solid var(--gold); padding: 16px; border-radius: 12px; text-align: center; color: var(--accent);">
+            ⚠️ คุณยังไม่ได้ใส่ Web App URL ใน <b>config.js</b><br>
+            เมื่อนำโค้ดไปวางใน Google Apps Script และ Deploy เรียบร้อยแล้ว ให้นำ URL มาใส่ใน config.js ครับ
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}?action=admin_day_view&date=${date}`);
+        const data = await res.json();
+
+        if (data.success) {
+          renderAdminTimeline(data.doctors || [], data.bookings || []);
+        } else {
+          grid.innerHTML = `<div style="color: red; text-align: center;">เกิดข้อผิดพลาด: ${data.error}</div>`;
+        }
+      } catch (err) {
+        grid.innerHTML = `<div style="color: red; text-align: center;">ไม่สามารถเชื่อมต่อ Google Sheets API ได้</div>`;
+      }
+    }
+
+    function renderAdminTimeline(doctors, bookings) {
+      const grid = document.getElementById("doctorsTimelineGrid");
+      grid.innerHTML = "";
+
+      if (doctors.length === 0) {
+        grid.innerHTML = `<div style="text-align: center; padding: 40px;">ไม่พบข้อมูลหมอนวด</div>`;
+        return;
+      }
+
+      doctors.forEach(doc => {
+        const docBookings = bookings.filter(b => b.doctor_id === doc.doctor_id);
+        const col = document.createElement("div");
+        col.className = "doc-column";
+
+        let bookingsHtml = "";
+        if (docBookings.length === 0) {
+          bookingsHtml = `<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">ไม่มีคิวนัดหมาย</div>`;
+        } else {
+          docBookings.forEach(b => {
+            bookingsHtml += `
+              <div class="admin-booking-item">
+                <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 13px;">
+                  <span style="color: var(--primary);">${b.start_time} - ${b.end_time} น.</span>
+                  <span style="font-size: 11px; color: #888;">${b.booking_id}</span>
+                </div>
+                <div style="font-weight: 600; font-size: 13px; margin: 4px 0;">${b.customer_name || 'ลูกค้า'}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">📞 ${b.customer_phone || '-'}</div>
+                <div style="font-size: 12px; color: var(--primary-light); font-weight: 500;">🌿 ${b.service_name}</div>
+                <select class="status-select" onchange="updateBookingStatus('${b.booking_id}', this.value)">
+                  <option value="CONFIRMED" ${b.status === 'CONFIRMED' ? 'selected' : ''}>⏳ ยืนยันแล้ว</option>
+                  <option value="ARRIVED" ${b.status === 'ARRIVED' ? 'selected' : ''}>🚶 มาถึงร้านแล้ว</option>
+                  <option value="COMPLETED" ${b.status === 'COMPLETED' ? 'selected' : ''}>✅ นวดเสร็จสิ้น</option>
+                  <option value="NO_SHOW" ${b.status === 'NO_SHOW' ? 'selected' : ''}>🚫 ไม่มาตามนัด (No-show)</option>
+                  <option value="CANCELLED" ${b.status === 'CANCELLED' ? 'selected' : ''}>❌ ยกเลิก</option>
+                </select>
+              </div>
+            `;
+          });
+        }
+
+        col.innerHTML = `
+          <div class="doc-column-title">
+            <span>💆 ${doc.nickname || doc.name}</span>
+            <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">${docBookings.length} คิว</span>
+          </div>
+          ${bookingsHtml}
+        `;
+        grid.appendChild(col);
+      });
+    }
+
+    async function updateBookingStatus(bookingId, newStatus) {
+      try {
+        await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "update_status",
+            booking_id: bookingId,
+            status: newStatus
+          })
+        });
+      } catch (e) {
+        alert("ไม่สามารถบันทึกสถานะได้");
+      }
+    }
+  </script>
+</body>
+</html>
