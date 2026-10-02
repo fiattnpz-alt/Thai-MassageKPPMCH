@@ -373,12 +373,18 @@ function renderSummary() {
 
 async function submitBooking() {
   const name = document.getElementById("custNameInput").value.trim();
+  const idCard = (document.getElementById("custIdCardInput") ? document.getElementById("custIdCardInput").value.trim() : "");
   const phone = document.getElementById("custPhoneInput").value.trim();
   const notes = document.getElementById("custNotesInput").value.trim();
 
   if (!name) {
     alert("กรุณากรอกชื่อ-นามสกุล");
     document.getElementById("custNameInput").focus();
+    return;
+  }
+  if (!idCard || idCard.length !== 13 || !/^\d{13}$/.test(idCard)) {
+    alert("กรุณากรอกเลขประจำตัวประชาชนให้ครบ 13 หลัก (ตัวเลขล้วน)");
+    if (document.getElementById("custIdCardInput")) document.getElementById("custIdCardInput").focus();
     return;
   }
   if (!phone || phone.length < 9) {
@@ -393,6 +399,7 @@ async function submitBooking() {
     action: "create_booking",
     line_user_id: lineProfile.userId,
     customer_name: name,
+    id_card: idCard,
     customer_phone: phone,
     doctor_id: bookingState.selectedDoctor,
     service_id: bookingState.selectedService.service_id,
@@ -564,6 +571,9 @@ async function fetchCustomerHistory() {
     const data = await res.json();
     if (data.success && data.customer) {
       if (data.customer.name) document.getElementById("custNameInput").value = data.customer.name;
+      if (data.customer.id_card && data.customer.id_card !== "-" && document.getElementById("custIdCardInput")) {
+        document.getElementById("custIdCardInput").value = data.customer.id_card;
+      }
       if (data.customer.phone) document.getElementById("custPhoneInput").value = data.customer.phone;
     }
   } catch (e) {
