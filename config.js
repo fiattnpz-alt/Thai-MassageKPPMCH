@@ -8,7 +8,7 @@ const CONFIG = {
 
   // 2. นำ Web App URL ที่ได้จากการ Deploy Google Apps Script มาใส่ที่นี่
   // ตัวอย่าง: "https://script.google.com/macros/s/AKfycb.../exec"
-  API_URL: "https://script.google.com/macros/s/AKfycbxA_LdxDoL5NeL0FKllQfGaYvWTJuNRg3gNLjUI609c0hDJDMFG7H1vgAVe1Nj-c9n3/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbxCH2vKe34jaRhSyfg1qiECQOrMnBMgLBS0_mskeDpbT4El3dOjXmwq2M_VGrYFLbTk/exec",
 
   // ชื่อร้าน
   SHOP_NAME: "คลินิกแพทย์แผนไทย & นวดเพื่อสุขภาพ",
