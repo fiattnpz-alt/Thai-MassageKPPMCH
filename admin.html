@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,26 +7,23 @@
   <link rel="stylesheet" href="style.css">
   <style>
     :root {
-      --admin-bg: #f3f5f8;
+      --admin-bg: #f1f5f9;
       --card-bg: #ffffff;
-      --border-color: #e2e8f0;
+      --border-color: #cbd5e1;
     }
-
     body {
       max-width: 100%;
       background: var(--admin-bg);
-      padding-bottom: 40px;
+      padding-bottom: 50px;
       font-family: -apple-system, BlinkMacSystemFont, "Sarabun", "Segoe UI", Roboto, sans-serif;
     }
-
     .admin-container {
       width: 100%;
-      max-width: 1280px;
+      max-width: 1300px;
       margin: 0 auto;
       padding: 16px;
     }
-
-    /* Top Bar */
+    /* Topbar */
     .admin-topbar {
       display: flex;
       justify-content: space-between;
@@ -35,10 +31,11 @@
       background: #ffffff;
       padding: 16px 24px;
       border-radius: var(--radius);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
       margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
-
     .admin-title-wrap h1 {
       font-size: 20px;
       color: var(--primary-dark);
@@ -47,36 +44,33 @@
       align-items: center;
       gap: 8px;
     }
-
     .admin-title-wrap p {
       margin: 0;
       font-size: 13px;
       color: var(--text-muted);
     }
-
     .topbar-actions {
       display: flex;
       gap: 10px;
       align-items: center;
     }
 
-    /* Admin Navigation Tabs */
+    /* Main Navigation Tabs */
     .admin-nav {
       display: flex;
       gap: 8px;
       background: #ffffff;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: var(--radius);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       margin-bottom: 20px;
       overflow-x: auto;
     }
-
     .nav-tab-btn {
       padding: 10px 18px;
       border-radius: 8px;
-      border: none;
-      background: transparent;
+      border: 1px solid transparent;
+      background: #f8fafc;
       color: var(--text-dark);
       font-weight: 600;
       font-size: 14px;
@@ -87,26 +81,24 @@
       transition: all 0.2s ease;
       white-space: nowrap;
     }
-
     .nav-tab-btn:hover {
-      background: rgba(27, 67, 50, 0.06);
+      background: rgba(27, 67, 50, 0.08);
       color: var(--primary);
     }
-
     .nav-tab-btn.active {
       background: var(--primary);
       color: #ffffff;
-      box-shadow: 0 2px 6px rgba(27, 67, 50, 0.3);
+      box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
+      border-color: var(--primary-dark);
     }
 
-    /* Content Panels */
+    /* Panels */
     .admin-panel {
       display: none;
     }
-
     .admin-panel.active {
       display: block;
-      animation: fadeIn 0.25s ease-out;
+      animation: fadeIn 0.2s ease-out;
     }
 
     /* Stats Bar */
@@ -116,29 +108,26 @@
       gap: 12px;
       margin-bottom: 16px;
     }
-
     .stat-card {
       background: #ffffff;
       padding: 14px 18px;
       border-radius: var(--radius-sm);
       border-left: 4px solid var(--primary);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     }
-
     .stat-label {
       font-size: 12px;
       color: var(--text-muted);
       margin-bottom: 4px;
     }
-
     .stat-num {
       font-size: 22px;
       font-weight: 700;
       color: var(--primary-dark);
     }
 
-    /* Timeline Columns */
-    .timeline-filter-bar {
+    /* Controls Bar */
+    .controls-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -146,30 +135,28 @@
       padding: 14px 20px;
       border-radius: var(--radius-sm);
       margin-bottom: 16px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
       flex-wrap: wrap;
       gap: 12px;
     }
 
+    /* Timeline Columns */
     .timeline-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
       gap: 16px;
     }
-
     .doc-column {
       background: #ffffff;
       border-radius: var(--radius);
       padding: 16px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
       border-top: 4px solid var(--primary);
     }
-
     .doc-column.on-leave {
       border-top-color: #e53e3e;
-      background: #fffafa;
+      background: #fff8f8;
     }
-
     .doc-column-title {
       font-weight: 700;
       color: var(--primary-dark);
@@ -178,8 +165,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
     }
-
     .leave-badge {
       background: #fed7d7;
       color: #9b2c2c;
@@ -188,57 +176,77 @@
       border-radius: 12px;
       font-weight: 600;
     }
-
     .admin-booking-item {
-      background: #fafbfc;
+      background: #ffffff;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
-      padding: 12px;
-      margin-bottom: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
       transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-
     .admin-booking-item:hover {
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
-
     .admin-booking-item.status-COMPLETED {
-      border-left: 4px solid #38a169;
+      border-left: 5px solid #38a169;
       background: #f7faf8;
     }
-
     .admin-booking-item.status-CANCELLED {
-      border-left: 4px solid #e53e3e;
-      opacity: 0.65;
+      border-left: 5px solid #e53e3e;
+      background: #fff5f5;
+      opacity: 0.7;
     }
-
     .admin-booking-item.status-ARRIVED {
-      border-left: 4px solid #3182ce;
+      border-left: 5px solid #3182ce;
       background: #f0f7ff;
     }
+    .admin-booking-item.status-NO_SHOW {
+      border-left: 5px solid #d69e2e;
+      background: #fffdf5;
+    }
 
+    .booking-actions-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      align-items: center;
+    }
     .status-select {
-      width: 100%;
-      padding: 6px 10px;
+      flex: 1;
+      padding: 6px 8px;
       border-radius: 6px;
       border: 1px solid var(--border-color);
       font-family: inherit;
       font-size: 12px;
       font-weight: 600;
-      margin-top: 8px;
       background: #ffffff;
       cursor: pointer;
     }
+    .btn-delete-booking {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-delete-booking:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
 
-    /* Common Card & Tables */
+    /* Tables & Cards */
     .content-card {
       background: #ffffff;
       border-radius: var(--radius);
       padding: 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       margin-bottom: 20px;
     }
-
     .card-header-flex {
       display: flex;
       justify-content: space-between;
@@ -247,92 +255,67 @@
       flex-wrap: wrap;
       gap: 12px;
     }
-
     .card-title {
       font-size: 18px;
       font-weight: 700;
       color: var(--primary-dark);
       margin: 0;
     }
-
+    .admin-table-wrap {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
     .admin-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
+      min-width: 750px;
     }
-
     .admin-table th {
       text-align: left;
       padding: 12px 14px;
       background: #f8fafc;
-      color: #64748b;
-      font-weight: 600;
-      border-bottom: 1px solid var(--border-color);
+      color: #475569;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border-color);
     }
-
     .admin-table td {
       padding: 14px;
       border-bottom: 1px solid var(--border-color);
       vertical-align: middle;
     }
-
     .admin-table tr:hover td {
       background: #f8fafc;
     }
 
-    /* Switch Toggle */
+    /* Switch */
     .switch {
       position: relative;
       display: inline-block;
       width: 44px;
       height: 24px;
     }
-
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
+    .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
       background-color: #cbd5e1;
       transition: .3s;
       border-radius: 24px;
     }
-
     .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
+      position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
       background-color: white;
       transition: .3s;
       border-radius: 50%;
     }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
 
-    input:checked+.slider {
-      background-color: var(--primary);
-    }
-
-    input:checked+.slider:before {
-      transform: translateX(20px);
-    }
-
-    /* PIN Modal */
+    /* Modals */
     .pin-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(6px);
       display: flex;
@@ -341,7 +324,6 @@
       z-index: 9999;
       padding: 16px;
     }
-
     .pin-box {
       background: #ffffff;
       width: 100%;
@@ -349,9 +331,8 @@
       padding: 32px 24px;
       border-radius: 16px;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     }
-
     .pin-input {
       letter-spacing: 12px;
       font-size: 28px;
@@ -364,32 +345,28 @@
       font-weight: 700;
     }
 
-    /* Modal Form */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       padding: 16px;
     }
-
     .modal-card {
       background: #ffffff;
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       border-radius: 14px;
       padding: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      overflow-y: auto;
     }
   </style>
 </head>
-
 <body>
 
   <!-- 🔒 PIN AUTHENTICATION OVERLAY -->
@@ -398,17 +375,15 @@
       <div style="font-size: 40px; margin-bottom: 8px;">🔐</div>
       <h2 style="color: var(--primary-dark); margin: 0 0 6px 0; font-size: 20px;">แดชบอร์ดแอดมิน</h2>
       <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">กรุณาใส่รหัส PIN เพื่อเข้าใช้งาน</p>
-
+      
       <form onsubmit="handlePinSubmit(event)">
-        <input type="password" id="pinInput" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric"
-          autofocus autocomplete="off">
+        <input type="password" id="pinInput" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" autofocus autocomplete="off">
         <div style="margin-bottom: 16px;">
           <label style="font-size: 12px; color: var(--text-muted); cursor: pointer;">
             <input type="checkbox" id="rememberPinCheckbox" checked> จดจำการเข้าสู่ระบบในเครื่องนี้
           </label>
         </div>
-        <button type="submit" class="btn btn-primary"
-          style="width: 100%; padding: 12px; font-size: 15px;">เข้าสู่ระบบ</button>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 15px;">เข้าสู่ระบบ</button>
       </form>
     </div>
   </div>
@@ -422,26 +397,29 @@
         <p id="topbarShopName">คลินิกแพทย์แผนไทย & นวดเพื่อสุขภาพ</p>
       </div>
       <div class="topbar-actions">
-        <a href="index.html" target="_blank" class="btn btn-secondary"
-          style="font-size: 13px; text-decoration: none;">🌐 ดูหน้าเว็บจองคิว</a>
-        <button class="btn btn-secondary" onclick="logoutAdmin()" style="font-size: 13px;">🔒 ล็อกหน้าจอ</button>
+        <button class="btn btn-primary" onclick="openWalkinModal()" style="font-size: 13px;">➕ เพิ่มคิวจองหน้าร้าน / Walk-in</button>
+        <a href="index.html" target="_blank" class="btn btn-secondary" style="font-size: 13px; text-decoration: none;">🌐 หน้าเว็บจองคิว</a>
+        <button class="btn btn-secondary" onclick="logoutAdmin()" style="font-size: 13px;">🔒 ล็อก</button>
       </div>
     </div>
 
     <!-- Navigation Tabs -->
     <div class="admin-nav">
-      <button class="nav-tab-btn active" onclick="switchAdminTab('timeline')">📅 ตารางคิวประจำวัน</button>
-      <button class="nav-tab-btn" onclick="switchAdminTab('leaves')">🏖️ จัดการวันลาหมอนวด</button>
-      <button class="nav-tab-btn" onclick="switchAdminTab('services')">💆‍♀️ จัดการบริการ & ราคา</button>
-      <button class="nav-tab-btn" onclick="switchAdminTab('doctors')">👨‍⚕️ รายชื่อหมอนวด</button>
+      <button class="nav-tab-btn active" id="tabBtnTimeline" onclick="switchAdminTab('timeline')">📅 ตารางคิวประจำวัน</button>
+      <button class="nav-tab-btn" id="tabBtnAllBookings" onclick="switchAdminTab('all_bookings')">📋 รายการนัดหมายทั้งหมด (ค้นหา/ลบ)</button>
+      <button class="nav-tab-btn" id="tabBtnLeaves" onclick="switchAdminTab('leaves')">🏖️ จัดการวันลาหมอนวด</button>
+      <button class="nav-tab-btn" id="tabBtnServices" onclick="switchAdminTab('services')">💆‍♀️ จัดการบริการ & ราคา (เพิ่ม/ลด/ลบ)</button>
+      <button class="nav-tab-btn" id="tabBtnDoctors" onclick="switchAdminTab('doctors')">👨‍⚕️ รายชื่อหมอนวด</button>
     </div>
 
+    <!-- ================================================================= -->
     <!-- TAB 1: TIMELINE (DAILY BOOKINGS) -->
+    <!-- ================================================================= -->
     <div class="admin-panel active" id="tabPanelTimeline">
-      <!-- Summary Stats -->
+      <!-- Stats -->
       <div class="stats-row">
         <div class="stat-card">
-          <div class="stat-label">คิวทั้งหมดวันนี้</div>
+          <div class="stat-label">คิวทั้งหมดวันที่เลือก</div>
           <div class="stat-num" id="statTotal">0</div>
         </div>
         <div class="stat-card" style="border-left-color: #3182ce;">
@@ -458,21 +436,20 @@
         </div>
       </div>
 
-      <!-- Filter Controls -->
-      <div class="timeline-filter-bar">
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <label style="font-weight: 600; font-size: 14px;">เลือกวันที่ดูคิว:</label>
-          <input type="date" id="adminDateInput" class="input-date" style="width: auto; padding: 8px 12px;"
-            onchange="loadAdminDayView()">
-          <button class="btn btn-primary" onclick="loadAdminDayView()" style="padding: 8px 16px; font-size: 13px;">🔄
-            รีเฟรช</button>
+      <!-- Controls -->
+      <div class="controls-bar">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <label style="font-weight: 700; font-size: 14px;">📅 เลือกวันที่ดูคิว:</label>
+          <input type="date" id="adminDateInput" class="input-date" style="width: auto; padding: 8px 12px;" onchange="loadAdminDayView()">
+          <button class="btn btn-primary" onclick="loadAdminDayView()" style="padding: 8px 16px; font-size: 13px;">🔄 รีเฟรช</button>
+          <button class="btn btn-secondary" onclick="openWalkinModal()" style="padding: 8px 16px; font-size: 13px;">➕ เพิ่มคิววันนี้</button>
         </div>
         <div style="font-size: 13px; color: var(--text-muted);">
-          รอบเวลาคงที่: <b>09:00-10:15</b> | <b>10:30-11:45</b> | <b>13:00-14:15</b> | <b>14:30-15:45</b>
+          รอบเวลาคงที่ 4 ช่วง: <b>09:00-10:15</b> | <b>10:30-11:45</b> | <b>13:00-14:15</b> | <b>14:30-15:45</b>
         </div>
       </div>
 
-      <!-- Grid Columns of Doctors -->
+      <!-- Doctors Columns Grid -->
       <div class="timeline-grid" id="doctorsTimelineGrid">
         <div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted);">
           กำลังโหลดตารางคิว...
@@ -480,28 +457,68 @@
       </div>
     </div>
 
-    <!-- TAB 2: DOCTOR LEAVES -->
+    <!-- ================================================================= -->
+    <!-- TAB 2: ALL BOOKINGS LIST & SEARCH (SEARCH / DELETE) -->
+    <!-- ================================================================= -->
+    <div class="admin-panel" id="tabPanelAllBookings">
+      <div class="content-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">📋 รายการนัดหมายทั้งหมดในระบบ</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              ค้นหาประวัติการจองตามชื่อ หรือเบอร์โทรศัพท์ และสามารถลบคิวออกจากฐานข้อมูลได้
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="searchBookingInput" class="form-input" placeholder="🔍 พิมพ์ชื่อ, เบอร์โทร, รหัสจอง..." style="width: 250px; padding: 8px 12px;" oninput="filterAllBookings()">
+            <button class="btn btn-primary" onclick="loadAllBookingsAdmin()" style="font-size: 13px;">🔄 รีเฟรช</button>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัสจอง</th>
+                <th>วันที่นัด</th>
+                <th>รอบเวลา</th>
+                <th>ชื่อคนไข้ / เบอร์โทร</th>
+                <th>เลขบัตร ปชช.</th>
+                <th>บริการ</th>
+                <th>หมอนวด</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="allBookingsTableBody">
+              <tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายการจอง...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: DOCTOR LEAVES -->
+    <!-- ================================================================= -->
     <div class="admin-panel" id="tabPanelLeaves">
       <div class="content-card">
         <div class="card-header-flex">
           <div>
-            <h2 class="card-title">🏖️ บันทึกการลาของหมอนวด</h2>
+            <h2 class="card-title">🏖️ จัดการวันลาของหมอนวด</h2>
             <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
-              เมื่อบันทึกวันลา ระบบจะตัดหมอท่านนี้ออกจากรอบจองของวันดังกล่าวให้อัตโนมัติ
-              (ลูกค้าจะไม่สามารถจองกับหมอคนนี้ในวันนั้นได้)
+              เมื่อบันทึกวันลา ระบบจะตัดหมอท่านนี้ออกจากรอบจองของวันดังกล่าวให้อัตโนมัติ (ลูกค้าจะจองหมอคนนี้ไม่ได้)
             </p>
           </div>
         </div>
 
         <!-- Add Leave Form -->
-        <div
-          style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; margin-bottom: 24px;">
-          <h3 style="font-size: 15px; margin: 0 0 12px 0; color: var(--primary);">➕ บันทึกวันลาใหม่</h3>
-          <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 120px; gap: 12px; align-items: flex-end;">
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <h3 style="font-size: 15px; margin: 0 0 14px 0; color: var(--primary);">➕ บันทึกวันลาใหม่</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 120px; gap: 12px; align-items: flex-end;">
             <div>
               <label class="form-label">เลือกหมอนวด:</label>
-              <select id="leaveDoctorSelect" class="form-input" style="padding: 8px 12px;">
+              <select id="leaveDoctorSelect" class="form-input" style="padding: 9px 12px;">
                 <option value="">กำลังโหลดรายชื่อหมอ...</option>
               </select>
             </div>
@@ -511,73 +528,75 @@
             </div>
             <div>
               <label class="form-label">เหตุผลการลา:</label>
-              <input type="text" id="leaveReasonInput" class="form-input" placeholder="เช่น ลากิจ, ลาป่วย, ติดธุระ"
-                style="padding: 8px 12px;">
+              <input type="text" id="leaveReasonInput" class="form-input" placeholder="เช่น ลากิจ, ลาป่วย, ติดธุระ" style="padding: 9px 12px;">
             </div>
             <div>
-              <button class="btn btn-primary" onclick="submitAddLeave()"
-                style="width: 100%; padding: 10px;">บันทึก</button>
+              <button class="btn btn-primary" onclick="submitAddLeave()" style="width: 100%; padding: 11px;">บันทึกวันลา</button>
             </div>
           </div>
         </div>
 
         <!-- Leaves Table -->
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>รหัส</th>
-              <th>ชื่อหมอนวด</th>
-              <th>วันที่ลา</th>
-              <th>เหตุผล</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="leavesTableBody">
-            <tr>
-              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                กำลังโหลดข้อมูลวันลา...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>ชื่อหมอนวด</th>
+                <th>วันที่ลา</th>
+                <th>เหตุผล</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="leavesTableBody">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">กำลังโหลดข้อมูลวันลา...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- TAB 3: SERVICES -->
+    <!-- ================================================================= -->
+    <!-- TAB 4: SERVICES MANAGEMENT (ADD / EDIT / DELETE / TOGGLE) -->
+    <!-- ================================================================= -->
     <div class="admin-panel" id="tabPanelServices">
       <div class="content-card">
         <div class="card-header-flex">
           <div>
-            <h2 class="card-title">🌿 จัดการรายการบริการ & ราคา</h2>
+            <h2 class="card-title">💆‍♀️ จัดการรายการบริการ & ราคา</h2>
             <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
-              เปิด/ปิดการแสดงผล หรือปรับราคาได้ทันที โดยไม่ต้องแก้ไขโค้ด
+              เพิ่มบริการใหม่, แก้ไขราคา, ปิดเปิดบริการ หรือลบบริการออกจากระบบได้โดยตรง
             </p>
           </div>
-          <button class="btn btn-primary" onclick="openAddServiceModal()">➕ เพิ่มบริการใหม่</button>
+          <button class="btn btn-primary" onclick="openAddServiceModal()" style="font-size: 14px; padding: 10px 18px;">
+            ➕ เพิ่มบริการใหม่
+          </button>
         </div>
 
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>รหัสบริการ</th>
-              <th>ชื่อบริการ</th>
-              <th>เวลา (นาที)</th>
-              <th>ราคา (บาท)</th>
-              <th>คำอธิบาย</th>
-              <th>สถานะเปิดบริการ</th>
-              <th>การกระทำ</th>
-            </tr>
-          </thead>
-          <tbody id="servicesTableBody">
-            <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">กำลังโหลดบริการ...
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัสบริการ</th>
+                <th>ชื่อบริการ</th>
+                <th>เวลา (นาที)</th>
+                <th>ราคา (บาท)</th>
+                <th>คำอธิบาย</th>
+                <th>เปิด/ปิดบริการ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="servicesTableBody">
+              <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">กำลังโหลดบริการ...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- TAB 4: DOCTORS -->
+    <!-- ================================================================= -->
+    <!-- TAB 5: DOCTORS -->
+    <!-- ================================================================= -->
     <div class="admin-panel" id="tabPanelDoctors">
       <div class="content-card">
         <div class="card-header-flex">
@@ -589,35 +608,36 @@
           </div>
         </div>
 
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>รหัส</th>
-              <th>ชื่อ-นามสกุล</th>
-              <th>ชื่อเล่น</th>
-              <th>เบอร์โทร</th>
-              <th>ทักษะบริการที่ทำได้</th>
-              <th>สถานะหมอ</th>
-            </tr>
-          </thead>
-          <tbody id="doctorsTableBody">
-            <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                กำลังโหลดรายชื่อหมอ...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัสหมอ</th>
+                <th>ชื่อ-นามสกุล</th>
+                <th>ชื่อเล่น</th>
+                <th>เบอร์โทร</th>
+                <th>ทักษะบริการที่ทำได้</th>
+                <th>สถานะหมอ</th>
+              </tr>
+            </thead>
+            <tbody id="doctorsTableBody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">กำลังโหลดรายชื่อหมอ...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
   </div>
 
+  <!-- ================================================================= -->
   <!-- ✏️ MODAL: ADD / EDIT SERVICE -->
+  <!-- ================================================================= -->
   <div class="modal-overlay" id="serviceModal">
     <div class="modal-card">
       <h3 style="margin: 0 0 16px 0; color: var(--primary);" id="serviceModalTitle">➕ เพิ่มบริการใหม่</h3>
       <input type="hidden" id="modalServiceId">
-
+      
       <div class="form-group">
         <label class="form-label">ชื่อบริการ *</label>
         <input type="text" id="modalServiceName" class="form-input" placeholder="เช่น นวดแก้อาการออฟฟิศซินโดรม">
@@ -639,7 +659,67 @@
 
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
         <button class="btn btn-secondary" onclick="closeServiceModal()">ยกเลิก</button>
-        <button class="btn btn-primary" onclick="submitSaveService()">บันทึกข้อมูล</button>
+        <button class="btn btn-primary" onclick="submitSaveService()">บันทึกข้อมูลบริการ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- ➕ MODAL: WALKIN / MANUAL BOOKING -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="walkinModal">
+    <div class="modal-card">
+      <h3 style="margin: 0 0 16px 0; color: var(--primary);">➕ บันทึกคิวจองหน้าร้าน / Walk-in</h3>
+      
+      <div class="form-group">
+        <label class="form-label">ชื่อ - นามสกุล คนไข้ *</label>
+        <input type="text" id="walkinCustName" class="form-input" placeholder="สมชาย ใจดี">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เลขประจำตัวประชาชน 13 หลัก</label>
+        <input type="tel" id="walkinCustIdCard" class="form-input" placeholder="xxxxxxxxxxxxx" maxlength="13">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เบอร์โทรศัพท์ติดต่อ *</label>
+        <input type="tel" id="walkinCustPhone" class="form-input" placeholder="08xxxxxxxx">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">วันที่นัดหมาย *</label>
+          <input type="date" id="walkinDate" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รอบเวลา *</label>
+          <select id="walkinTimeSlot" class="form-input">
+            <option value="09:00">09:00 - 10:15 น.</option>
+            <option value="10:30">10:30 - 11:45 น.</option>
+            <option value="13:00">13:00 - 14:15 น.</option>
+            <option value="14:30">14:30 - 15:45 น.</option>
+          </select>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">บริการ *</label>
+          <select id="walkinServiceSelect" class="form-input">
+            <option value="">กำลังโหลดบริการ...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมอนวด *</label>
+          <select id="walkinDoctorSelect" class="form-input">
+            <option value="ANY">ใครก็ได้ (ระบบจัดสรร)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">หมายเหตุ / อาการ</label>
+        <input type="text" id="walkinNotes" class="form-input" placeholder="เช่น Walk-in หน้าร้าน, นวดแก้อาการ">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeWalkinModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitWalkinBooking()">บันทึกคิวจอง</button>
       </div>
     </div>
   </div>
@@ -664,6 +744,7 @@
       document.getElementById("adminDateInput").value = today;
       document.getElementById("leaveDateInput").value = today;
       document.getElementById("leaveDateInput").min = today;
+      document.getElementById("walkinDate").value = today;
     });
 
     function handlePinSubmit(e) {
@@ -684,7 +765,7 @@
     function unlockAdmin() {
       document.getElementById("pinOverlay").style.display = "none";
       document.getElementById("adminApp").style.display = "block";
-      if (CONFIG && CONFIG.SHOP_NAME) {
+      if (typeof CONFIG !== "undefined" && CONFIG.SHOP_NAME) {
         document.getElementById("topbarShopName").textContent = CONFIG.SHOP_NAME;
       }
       loadAdminDayView();
@@ -703,19 +784,23 @@
       document.querySelectorAll(".admin-panel").forEach(panel => panel.classList.remove("active"));
 
       if (tabName === "timeline") {
-        event.currentTarget.classList.add("active");
+        document.getElementById("tabBtnTimeline").classList.add("active");
         document.getElementById("tabPanelTimeline").classList.add("active");
         loadAdminDayView();
+      } else if (tabName === "all_bookings") {
+        document.getElementById("tabBtnAllBookings").classList.add("active");
+        document.getElementById("tabPanelAllBookings").classList.add("active");
+        loadAllBookingsAdmin();
       } else if (tabName === "leaves") {
-        event.currentTarget.classList.add("active");
+        document.getElementById("tabBtnLeaves").classList.add("active");
         document.getElementById("tabPanelLeaves").classList.add("active");
         loadDoctorLeaves();
       } else if (tabName === "services") {
-        event.currentTarget.classList.add("active");
+        document.getElementById("tabBtnServices").classList.add("active");
         document.getElementById("tabPanelServices").classList.add("active");
         loadAdminServices();
       } else if (tabName === "doctors") {
-        event.currentTarget.classList.add("active");
+        document.getElementById("tabBtnDoctors").classList.add("active");
         document.getElementById("tabPanelDoctors").classList.add("active");
         loadAdminDoctors();
       }
@@ -784,19 +869,25 @@
             bookingsHtml += `
               <div class="admin-booking-item status-${b.status || 'CONFIRMED'}">
                 <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 13px;">
-                  <span style="color: var(--primary);">${b.start_time} - ${b.end_time} น.</span>
+                  <span style="color: var(--primary); font-size: 14px;">⏰ ${b.start_time} - ${b.end_time} น.</span>
                   <span style="font-size: 11px; color: #888;">${b.booking_id}</span>
                 </div>
-                <div style="font-weight: 600; font-size: 13px; margin: 4px 0;">👤 ${b.customer_name || 'ลูกค้า'}</div>
-                <div style="font-size: 12px; color: var(--text-muted);">📞 ${b.customer_phone || '-'}</div>
-                <div style="font-size: 12px; color: var(--primary-light); font-weight: 500;">🌿 ${b.service_name}</div>
-                <select class="status-select" onchange="updateBookingStatus('${b.booking_id}', this.value)">
-                  <option value="CONFIRMED" ${b.status === 'CONFIRMED' ? 'selected' : ''}>⏳ ยืนยันแล้ว</option>
-                  <option value="ARRIVED" ${b.status === 'ARRIVED' ? 'selected' : ''}>🚶 มาถึงร้านแล้ว</option>
-                  <option value="COMPLETED" ${b.status === 'COMPLETED' ? 'selected' : ''}>✅ นวดเสร็จสิ้น</option>
-                  <option value="NO_SHOW" ${b.status === 'NO_SHOW' ? 'selected' : ''}>🚫 ไม่มาตามนัด (No-show)</option>
-                  <option value="CANCELLED" ${b.status === 'CANCELLED' ? 'selected' : ''}>❌ ยกเลิก</option>
-                </select>
+                <div style="font-weight: 700; font-size: 14px; margin: 6px 0 2px 0;">👤 ${b.customer_name || 'ลูกค้า'}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">📞 เบอร์: <b>${b.customer_phone || '-'}</b></div>
+                ${b.id_card && b.id_card !== '-' ? `<div style="font-size: 11px; color: #64748b;">🪪 ปชช: ${b.id_card}</div>` : ''}
+                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-top: 4px;">🌿 ${b.service_name}</div>
+                ${b.notes && b.notes !== '-' ? `<div style="font-size: 11px; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; margin-top: 4px;">📝 ${b.notes}</div>` : ''}
+                
+                <div class="booking-actions-row">
+                  <select class="status-select" onchange="updateBookingStatus('${b.booking_id}', this.value)">
+                    <option value="CONFIRMED" ${b.status === 'CONFIRMED' ? 'selected' : ''}>⏳ ยืนยันแล้ว</option>
+                    <option value="ARRIVED" ${b.status === 'ARRIVED' ? 'selected' : ''}>🚶 มาถึงร้านแล้ว</option>
+                    <option value="COMPLETED" ${b.status === 'COMPLETED' ? 'selected' : ''}>✅ นวดเสร็จสิ้น</option>
+                    <option value="NO_SHOW" ${b.status === 'NO_SHOW' ? 'selected' : ''}>🚫 ไม่มาตามนัด</option>
+                    <option value="CANCELLED" ${b.status === 'CANCELLED' ? 'selected' : ''}>❌ ยกเลิก</option>
+                  </select>
+                  <button class="btn-delete-booking" title="ลบคิวนี้ออกจากชีต" onclick="deleteBookingClick('${b.booking_id}')">ลบ</button>
+                </div>
               </div>
             `;
           });
@@ -829,8 +920,105 @@
       }
     }
 
+    async function deleteBookingClick(bookingId) {
+      if (!confirm(`⚠️ คำเตือน: คุณต้องการลบคิวรหัส ${bookingId} ออกจาก Google Sheet อย่างถาวรใช่หรือไม่?`)) return;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "delete_booking",
+            booking_id: bookingId
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ลบคิวออกจากฐานข้อมูลเรียบร้อยแล้ว");
+          loadAdminDayView();
+          if (document.getElementById("tabPanelAllBookings").classList.contains("active")) {
+            loadAllBookingsAdmin();
+          }
+        } else {
+          alert("ไม่สามารถลบได้: " + (data.error || "เกิดข้อผิดพลาด"));
+        }
+      } catch (e) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      }
+    }
+
     // ==========================================
-    // 4. Tab 2: Doctor Leaves Logic
+    // 4. Tab 2: All Bookings List & Search
+    // ==========================================
+    let cachedAllBookings = [];
+
+    async function loadAllBookingsAdmin() {
+      const tbody = document.getElementById("allBookingsTableBody");
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายการจองทั้งหมด...</td></tr>`;
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}?action=admin_all_bookings`);
+        const data = await res.json();
+        if (data.success) {
+          cachedAllBookings = data.bookings || [];
+          renderAllBookingsTable(cachedAllBookings);
+        } else {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: red;">เกิดข้อผิดพลาด: ${data.error}</td></tr>`;
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: red;">ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้</td></tr>`;
+      }
+    }
+
+    function renderAllBookingsTable(bookings) {
+      const tbody = document.getElementById("allBookingsTableBody");
+      tbody.innerHTML = "";
+
+      if (bookings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">ไม่พบข้อมูลการจอง</td></tr>`;
+        return;
+      }
+
+      bookings.forEach(b => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><b>${b.booking_id}</b></td>
+          <td>📅 <b>${b.date}</b></td>
+          <td>⏰ ${b.start_time} - ${b.end_time} น.</td>
+          <td><b>${b.customer_name}</b><br><span style="font-size: 11px; color: #64748b;">📞 ${b.customer_phone}</span></td>
+          <td>${b.id_card && b.id_card !== '-' ? b.id_card : '-'}</td>
+          <td style="color: var(--primary); font-weight: 600;">🌿 ${b.service_name}</td>
+          <td>💆 ${b.doctor_name}</td>
+          <td>
+            <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; ${b.status === 'COMPLETED' ? 'background: #dcfce7; color: #166534;' : (b.status === 'CANCELLED' ? 'background: #fee2e2; color: #991b1b;' : 'background: #e0f2fe; color: #075985;')}">
+              ${b.status}
+            </span>
+          </td>
+          <td>
+            <button class="btn-delete-booking" onclick="deleteBookingClick('${b.booking_id}')">ลบ</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterAllBookings() {
+      const query = document.getElementById("searchBookingInput").value.toLowerCase().trim();
+      if (!query) {
+        renderAllBookingsTable(cachedAllBookings);
+        return;
+      }
+      const filtered = cachedAllBookings.filter(b => 
+        (b.customer_name && b.customer_name.toLowerCase().includes(query)) ||
+        (b.customer_phone && b.customer_phone.includes(query)) ||
+        (b.booking_id && b.booking_id.toLowerCase().includes(query)) ||
+        (b.doctor_name && b.doctor_name.toLowerCase().includes(query)) ||
+        (b.id_card && b.id_card.includes(query))
+      );
+      renderAllBookingsTable(filtered);
+    }
+
+    // ==========================================
+    // 5. Tab 3: Doctor Leaves Logic
     // ==========================================
     async function loadDoctorLeaves() {
       const tbody = document.getElementById("leavesTableBody");
@@ -841,14 +1029,12 @@
         const data = await res.json();
 
         if (data.success) {
-          // Populate Doctor Select Dropdown
           const select = document.getElementById("leaveDoctorSelect");
           select.innerHTML = '<option value="">-- เลือกหมอนวด --</option>';
           (data.doctors || []).forEach(d => {
             select.innerHTML += `<option value="${d.doctor_id}">${d.nickname || d.name} (${d.doctor_id})</option>`;
           });
 
-          // Populate Leaves Table
           tbody.innerHTML = "";
           if (!data.leaves || data.leaves.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">ยังไม่มีประวัติการลา</td></tr>`;
@@ -933,7 +1119,7 @@
     }
 
     // ==========================================
-    // 5. Tab 3: Services Management Logic
+    // 6. Tab 4: Services Management (Add / Edit / Delete / Toggle)
     // ==========================================
     let cachedServices = [];
 
@@ -955,7 +1141,7 @@
               <td><b>${s.service_id}</b></td>
               <td><b>${s.name}</b></td>
               <td>⏱️ ${s.duration_mins} นาที</td>
-              <td><b style="color: var(--gold);">${Number(s.price).toLocaleString()} ฿</b></td>
+              <td><b style="color: var(--gold); font-size: 15px;">${Number(s.price).toLocaleString()} ฿</b></td>
               <td style="color: var(--text-muted); font-size: 12px; max-width: 250px;">${s.description || '-'}</td>
               <td>
                 <label class="switch">
@@ -964,9 +1150,14 @@
                 </label>
               </td>
               <td>
-                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editService('${s.service_id}')">
-                  ✏️ แก้ไข
-                </button>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="editService('${s.service_id}')">
+                    ✏️ แก้ไข
+                  </button>
+                  <button class="btn-delete-booking" style="padding: 6px 10px; font-size: 12px;" onclick="deleteServiceClick('${s.service_id}')">
+                    🗑️ ลบ
+                  </button>
+                </div>
               </td>
             `;
             tbody.appendChild(tr);
@@ -1054,8 +1245,31 @@
       }
     }
 
+    async function deleteServiceClick(serviceId) {
+      if (!confirm(`⚠️ ต้องการลบบริการรหัส ${serviceId} ออกจาก Google Sheet ใช่หรือไม่?`)) return;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "delete_service",
+            service_id: serviceId
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ลบบริการเรียบร้อยแล้ว");
+          loadAdminServices();
+        } else {
+          alert("ไม่สามารถลบได้: " + (data.error || ""));
+        }
+      } catch (e) {
+        alert("ไม่สามารถเชื่อมต่อได้");
+      }
+    }
+
     // ==========================================
-    // 6. Tab 4: Doctors Management Logic
+    // 7. Tab 5: Doctors Logic
     // ==========================================
     async function loadAdminDoctors() {
       const tbody = document.getElementById("doctorsTableBody");
@@ -1104,7 +1318,86 @@
         alert("ไม่สามารถเปลี่ยนสถานะหมอได้");
       }
     }
+
+    // ==========================================
+    // 8. Walk-in / Phone-in Modal Logic
+    // ==========================================
+    async function openWalkinModal() {
+      document.getElementById("walkinCustName").value = "";
+      document.getElementById("walkinCustPhone").value = "";
+      document.getElementById("walkinCustIdCard").value = "";
+      document.getElementById("walkinNotes").value = "";
+      document.getElementById("walkinModal").style.display = "flex";
+
+      // Load services & doctors options if needed
+      try {
+        const [resSrv, resDoc] = await Promise.all([
+          fetch(`${CONFIG.API_URL}?action=admin_get_services`).then(r => r.json()),
+          fetch(`${CONFIG.API_URL}?action=admin_get_doctors`).then(r => r.json())
+        ]);
+        if (resSrv.success) {
+          const srvSelect = document.getElementById("walkinServiceSelect");
+          srvSelect.innerHTML = "";
+          resSrv.services.filter(s => s.is_active).forEach(s => {
+            srvSelect.innerHTML += `<option value="${s.service_id}">${s.name} (${s.price} ฿)</option>`;
+          });
+        }
+        if (resDoc.success) {
+          const docSelect = document.getElementById("walkinDoctorSelect");
+          docSelect.innerHTML = '<option value="ANY">ใครก็ได้ (ระบบจัดสรร)</option>';
+          resDoc.doctors.filter(d => d.is_active).forEach(d => {
+            docSelect.innerHTML += `<option value="${d.doctor_id}">${d.nickname || d.name}</option>`;
+          });
+        }
+      } catch (e) {}
+    }
+
+    function closeWalkinModal() {
+      document.getElementById("walkinModal").style.display = "none";
+    }
+
+    async function submitWalkinBooking() {
+      const name = document.getElementById("walkinCustName").value.trim();
+      const phone = document.getElementById("walkinCustPhone").value.trim();
+      const idCard = document.getElementById("walkinCustIdCard").value.trim();
+      const date = document.getElementById("walkinDate").value;
+      const startTime = document.getElementById("walkinTimeSlot").value;
+      const serviceId = document.getElementById("walkinServiceSelect").value;
+      const doctorId = document.getElementById("walkinDoctorSelect").value;
+      const notes = document.getElementById("walkinNotes").value.trim();
+
+      if (!name) { alert("กรุณากรอกชื่อลูกค้า"); return; }
+      if (!phone) { alert("กรุณากรอกเบอร์โทร"); return; }
+      if (!serviceId) { alert("กรุณาเลือกบริการ"); return; }
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "admin_create_booking",
+            line_user_id: "WALKIN",
+            customer_name: name,
+            customer_phone: phone,
+            id_card: idCard,
+            booking_date: date,
+            start_time: startTime,
+            service_id: serviceId,
+            doctor_id: doctorId,
+            notes: notes || "Walk-in หน้าร้าน"
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ออกคิวจองสำเร็จ: " + data.booking_id);
+          closeWalkinModal();
+          loadAdminDayView();
+        } else {
+          alert("ไม่สามารถจองได้: " + (data.error || ""));
+        }
+      } catch (e) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      }
+    }
   </script>
 </body>
-
 </html>
