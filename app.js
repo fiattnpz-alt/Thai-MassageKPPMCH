@@ -24,6 +24,7 @@ let bookingState = {
 let servicesData = [];
 let doctorsData = [];
 let activeSlots = [];
+let monthlyRosterCache = {};
 
 // ==========================================================================
 // 1. เริ่มต้นระบบเมื่อเปิดหน้าเว็บ
@@ -109,6 +110,8 @@ async function loadInitialData() {
     if (data.success) {
       servicesData = data.services || [];
       doctorsData = data.doctors || [];
+      if (data.current_roster) Object.assign(monthlyRosterCache, data.current_roster);
+      if (data.next_roster) Object.assign(monthlyRosterCache, data.next_roster);
       if (data.settings && data.settings.shop_name) {
         document.getElementById("shopTitle").textContent = data.settings.shop_name;
       }
@@ -186,11 +189,23 @@ function formatThaiDateWithDay(dateStr) {
   return `วัน${dayName}ที่ ${d} ${thaiMonths[m - 1]} ${thaiYear}`;
 }
 
-function onDateChanged() {
+async function onDateChanged() {
   const dateVal = document.getElementById("bookingDateInput").value;
   if (!dateVal) return;
   bookingState.selectedDate = dateVal;
   bookingState.selectedSlot = null;
+
+  const monthStr = dateVal.slice(0, 7);
+  if (!monthlyRosterCache.hasOwnProperty(dateVal) && CONFIG.API_URL && !CONFIG.API_URL.startsWith("ใส่_")) {
+    try {
+      const res = await fetch(`${CONFIG.API_URL}?action=get_monthly_roster&month=${monthStr}`);
+      const data = await res.json();
+      if (data.success && data.roster) {
+        Object.assign(monthlyRosterCache, data.roster);
+      }
+    } catch (e) {}
+  }
+
   renderDoctorsForSelectedDate();
 }
 
@@ -209,13 +224,21 @@ function renderDoctorsForSelectedDate() {
   const dateObj = new Date(y, m - 1, d);
   const dayOfWeek = dateObj.getDay();
 
+  // ตรวจสอบตารางเวรรายเดือน (ถ้ามีจัดเวรไว้ให้ยึดตามเวรรายเดือน หากไม่มีให้ fallback ไปที่วันประจำสัปดาห์)
+  const rosterDutyDocIds = monthlyRosterCache[bookingState.selectedDate];
+
   // กรองหมอที่:
   // 1. มีสถานะพร้อมทำงาน (is_active !== false)
-  // 2. มีทักษะบริการที่เลือก (skills includes serviceId)
-  // 3. เข้าเวรในวันประจำสัปดาห์นี้ (work_days includes dayOfWeek)
+  // 2. อยู่เวรในวันที่เลือก (ตามเวรรายเดือน หรือวันประจำสัปดาห์)
+  // 3. มีทักษะบริการที่เลือก (skills includes serviceId)
   const qualifiedDocs = doctorsData.filter(doc => {
     if (doc.is_active === false || String(doc.is_active).toUpperCase() === "FALSE") return false;
-    const worksOnDay = String(doc.work_days).split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+    let worksOnDay = false;
+    if (rosterDutyDocIds !== undefined) {
+      worksOnDay = rosterDutyDocIds.includes(doc.doctor_id);
+    } else {
+      worksOnDay = String(doc.work_days).split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+    }
     const hasSkill = String(doc.skills).split(",").map(s => String(s).trim()).includes(serviceId);
     return worksOnDay && hasSkill;
   });

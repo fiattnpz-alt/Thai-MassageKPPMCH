@@ -312,6 +312,90 @@
     input:checked + .slider { background-color: var(--primary); }
     input:checked + .slider:before { transform: translateX(20px); }
 
+    /* Monthly Duty Roster Matrix Styles */
+    .roster-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+      min-width: 1150px;
+    }
+    .roster-table th, .roster-table td {
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 6px 3px;
+      text-align: center;
+    }
+    .roster-sticky-col {
+      position: sticky;
+      left: 0;
+      background: #ffffff;
+      z-index: 5;
+      text-align: left !important;
+      padding-left: 10px !important;
+      font-weight: 600;
+      min-width: 150px;
+      max-width: 170px;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.06);
+    }
+    .roster-sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      background: #f8fafc;
+    }
+    .roster-header-cell {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+      min-width: 34px;
+    }
+    .roster-header-cell:hover {
+      background: #e2e8f0 !important;
+    }
+    .roster-cell-duty {
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 6px 2px;
+      margin: 1px;
+      transition: all 0.15s ease;
+      user-select: none;
+      font-size: 11px;
+    }
+    .roster-cell-duty:hover {
+      background: #bbf7d0;
+      transform: scale(1.06);
+    }
+    .roster-cell-off {
+      background: #f8fafc;
+      color: #94a3b8;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 6px 2px;
+      margin: 1px;
+      transition: all 0.15s ease;
+      user-select: none;
+      font-size: 11px;
+    }
+    .roster-cell-off:hover {
+      background: #e2e8f0;
+      color: #334155;
+      transform: scale(1.06);
+    }
+    .roster-weekend-col {
+      background: #fff5f5 !important;
+    }
+    .roster-count-badge {
+      display: inline-block;
+      padding: 1px 4px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
     /* Modals */
     .pin-overlay {
       position: fixed;
@@ -406,6 +490,7 @@
     <!-- Navigation Tabs -->
     <div class="admin-nav">
       <button class="nav-tab-btn active" id="tabBtnTimeline" onclick="switchAdminTab('timeline')">📅 ตารางคิวประจำวัน</button>
+      <button class="nav-tab-btn" id="tabBtnRoster" onclick="switchAdminTab('roster')">🗓️ ตารางเวรหมอรายเดือน</button>
       <button class="nav-tab-btn" id="tabBtnAllBookings" onclick="switchAdminTab('all_bookings')">📋 รายการนัดหมายทั้งหมด (ค้นหา/ลบ)</button>
       <button class="nav-tab-btn" id="tabBtnLeaves" onclick="switchAdminTab('leaves')">🏖️ จัดการวันลาหมอนวด</button>
       <button class="nav-tab-btn" id="tabBtnServices" onclick="switchAdminTab('services')">💆‍♀️ จัดการบริการ & ราคา (เพิ่ม/ลด/ลบ)</button>
@@ -453,6 +538,58 @@
       <div class="timeline-grid" id="doctorsTimelineGrid">
         <div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted);">
           กำลังโหลดตารางคิว...
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB: MONTHLY DOCTOR DUTY ROSTER (ตารางเวรหมอรายเดือน) -->
+    <!-- ================================================================= -->
+    <div class="admin-panel" id="tabPanelRoster">
+      <div class="content-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">🗓️ ตารางจัดเวรหมอนวดรายเดือน (Monthly Duty Roster)</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              กำหนดวันเข้าเวรของหมอทุกคนในแต่ละเดือน จิ้มเลือกได้ทีละวัน หรือเติมตามวันประจำสัปดาห์ แล้วกดบันทึก
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button class="btn btn-secondary" onclick="quickFillRosterFromWeekly()" title="ดึงวันเข้าเวรประจำของทุกคนมาใส่ทั้งเดือนอัตโนมัติ">
+              ⚡ เติมตามวันประจำ (Quick Fill)
+            </button>
+            <button class="btn btn-secondary" onclick="setAllRosterState(true)" title="เลือกให้ทุกคนอยู่เวรทุกวัน">
+              👥 เลือกทุกคน
+            </button>
+            <button class="btn btn-secondary" onclick="setAllRosterState(false)" style="color: #c5221f;" title="ล้างตารางเวรของเดือนนี้">
+              🧹 ล้างเวร
+            </button>
+            <button class="btn btn-primary" onclick="saveCurrentMonthRoster()" id="btnSaveRoster" style="font-size: 14px; padding: 10px 20px; background: #15803d; border-color: #166534;">
+              💾 บันทึกตารางเวรทั้งเดือน
+            </button>
+          </div>
+        </div>
+
+        <!-- Month Navigation Controls -->
+        <div class="controls-bar" style="background: #f1f5f9; border: 1px solid var(--border-color); margin-bottom: 20px;">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-secondary" onclick="changeRosterMonthOffset(-1)">◀ เดือนก่อนหน้า</button>
+            <input type="month" id="rosterMonthPicker" class="form-input" style="width: auto; padding: 8px 14px; font-weight: 700; font-size: 15px;" onchange="onRosterMonthChange()">
+            <button class="btn btn-secondary" onclick="changeRosterMonthOffset(1)">เดือนถัดไป ▶</button>
+            <span id="rosterMonthTitleTh" style="font-size: 16px; font-weight: 700; color: var(--primary-dark); margin-left: 8px;"></span>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 14px; height: 14px; background: #dcfce7; border: 1px solid #86efac; border-radius: 3px;"></span> = อยู่เวร (คลิกเพื่อเปลี่ยน)</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 14px; height: 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 3px;"></span> = หยุด</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 14px; height: 14px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 3px;"></span> = ส.-อา.</span>
+          </div>
+        </div>
+
+        <!-- Matrix Table Container -->
+        <div class="admin-table-wrap" id="rosterTableContainer" style="max-height: 650px; overflow: auto;">
+          <div style="text-align: center; padding: 50px; color: var(--text-muted);">
+            กำลังโหลดตารางเวรประจำเดือน...
+          </div>
         </div>
       </div>
     </div>
@@ -749,6 +886,36 @@
   </div>
 
   <!-- ================================================================= -->
+  <!-- 🗓️ MODAL: DAILY ROSTER EDITOR (จัดเวรเฉพาะวัน) -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="dailyRosterModal">
+    <div class="modal-card" style="max-width: 550px;">
+      <h3 style="margin: 0 0 8px 0; color: var(--primary);" id="dailyRosterModalTitle">🗓️ จัดเวรประจำวัน</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
+        ติ๊กเลือกหมอนวดที่ต้องการให้อยู่เวรในวันที่นี้
+      </p>
+      <input type="hidden" id="dailyRosterModalDate">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span id="dailyRosterCountLabel" style="font-weight: 600; font-size: 13px; color: var(--primary);"></span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="setDailyModalAll(true)">เลือกทุกคน</button>
+          <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="setDailyModalAll(false)">ยกเลิกทุกคน</button>
+        </div>
+      </div>
+
+      <div id="dailyRosterDoctorsList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 320px; overflow-y: auto; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color);">
+        <!-- dynamically rendered doctor checkboxes -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeDailyRosterModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="applyDailyRosterModal()">✓ นำไปใช้ในตาราง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
   <!-- ➕ MODAL: WALKIN / MANUAL BOOKING -->
   <!-- ================================================================= -->
   <div class="modal-overlay" id="walkinModal">
@@ -871,6 +1038,10 @@
         document.getElementById("tabBtnTimeline").classList.add("active");
         document.getElementById("tabPanelTimeline").classList.add("active");
         loadAdminDayView();
+      } else if (tabName === "roster") {
+        document.getElementById("tabBtnRoster").classList.add("active");
+        document.getElementById("tabPanelRoster").classList.add("active");
+        loadMonthlyRoster();
       } else if (tabName === "all_bookings") {
         document.getElementById("tabBtnAllBookings").classList.add("active");
         document.getElementById("tabPanelAllBookings").classList.add("active");
@@ -1350,6 +1521,354 @@
       } catch (e) {
         alert("ไม่สามารถเชื่อมต่อได้");
       }
+    }
+
+    // ==========================================
+    // 6.5 Tab: Monthly Doctor Duty Roster Logic (ตารางเวรหมอรายเดือน)
+    // ==========================================
+    let currentRosterMonth = "";
+    let cachedRosterMap = {}; // { "2026-10-01": ["DOC-001", "DOC-002"], ... }
+    let rosterDoctorsList = [];
+
+    const THAI_MONTH_NAMES_FULL = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+
+    function formatRosterMonthTh(monthStr) {
+      if (!monthStr) return "";
+      const [y, m] = monthStr.split("-").map(Number);
+      return `${THAI_MONTH_NAMES_FULL[m - 1]} ${y + 543}`;
+    }
+
+    function initRosterMonth() {
+      if (!currentRosterMonth) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        currentRosterMonth = `${yyyy}-${mm}`;
+      }
+      const picker = document.getElementById("rosterMonthPicker");
+      if (picker) picker.value = currentRosterMonth;
+      const titleEl = document.getElementById("rosterMonthTitleTh");
+      if (titleEl) titleEl.textContent = formatRosterMonthTh(currentRosterMonth);
+    }
+
+    function onRosterMonthChange() {
+      const picker = document.getElementById("rosterMonthPicker");
+      if (picker && picker.value) {
+        currentRosterMonth = picker.value;
+        const titleEl = document.getElementById("rosterMonthTitleTh");
+        if (titleEl) titleEl.textContent = formatRosterMonthTh(currentRosterMonth);
+        loadMonthlyRoster();
+      }
+    }
+
+    function changeRosterMonthOffset(offset) {
+      if (!currentRosterMonth) initRosterMonth();
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const d = new Date(y, m - 1 + offset, 1);
+      const nextY = d.getFullYear();
+      const nextM = String(d.getMonth() + 1).padStart(2, '0');
+      currentRosterMonth = `${nextY}-${nextM}`;
+      const picker = document.getElementById("rosterMonthPicker");
+      if (picker) picker.value = currentRosterMonth;
+      const titleEl = document.getElementById("rosterMonthTitleTh");
+      if (titleEl) titleEl.textContent = formatRosterMonthTh(currentRosterMonth);
+      loadMonthlyRoster();
+    }
+
+    async function loadMonthlyRoster() {
+      initRosterMonth();
+      const container = document.getElementById("rosterTableContainer");
+      container.innerHTML = `<div style="text-align: center; padding: 50px; color: var(--text-muted);">กำลังโหลดตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)}...</div>`;
+
+      try {
+        if (cachedDoctors.length === 0) {
+          const resDocs = await fetch(`${CONFIG.API_URL}?action=admin_get_doctors`).then(r => r.json());
+          if (resDocs.success) cachedDoctors = resDocs.doctors || [];
+        }
+        rosterDoctorsList = cachedDoctors.filter(d => d.is_active);
+
+        const resRoster = await fetch(`${CONFIG.API_URL}?action=admin_get_roster&month=${currentRosterMonth}`).then(r => r.json());
+        if (resRoster.success) {
+          cachedRosterMap = resRoster.roster || {};
+        } else {
+          cachedRosterMap = {};
+        }
+
+        renderRosterMatrix();
+      } catch (err) {
+        container.innerHTML = `<div style="color: red; text-align: center; padding: 40px;">เกิดข้อผิดพลาดในการโหลดตารางเวร</div>`;
+      }
+    }
+
+    function renderRosterMatrix() {
+      const container = document.getElementById("rosterTableContainer");
+      if (rosterDoctorsList.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">ยังไม่มีหมอนวดที่เปิดรับงานในระบบ กรุณาเพิ่มหมอที่แท็บ "รายชื่อหมอนวด" ก่อนครับ</div>`;
+        return;
+      }
+
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const dates = [];
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dd = String(i).padStart(2, '0');
+        dates.push(`${currentRosterMonth}-${dd}`);
+      }
+
+      const dayNamesShort = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+      let html = `<table class="roster-table">`;
+
+      // 1. Header Row 1: Day numbers & names
+      html += `<thead><tr class="roster-sticky-header">`;
+      html += `<th class="roster-sticky-col" style="background: #f8fafc; z-index: 7;">หมอนวด (คลิกช่องเพื่อสลับเวร)</th>`;
+      dates.forEach(dStr => {
+        const dObj = new Date(dStr + "T00:00:00");
+        const dayNum = parseInt(dStr.slice(-2), 10);
+        const dayOfWeek = dObj.getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const weekendClass = isWeekend ? 'roster-weekend-col' : '';
+        const dayColor = isWeekend ? '#b91c1c' : '#475569';
+
+        html += `
+          <th class="roster-header-cell ${weekendClass}" onclick="openDailyRosterModal('${dStr}')" title="คลิกเพื่อจัดเวรวันที่ ${dStr}">
+            <div style="font-size: 14px; font-weight: 700; color: ${dayColor};">${dayNum}</div>
+            <div style="font-size: 10px; color: ${dayColor}; opacity: 0.85;">${dayNamesShort[dayOfWeek]}</div>
+          </th>
+        `;
+      });
+      html += `<th style="background: #f8fafc; min-width: 65px; font-size: 11px;">รวมเวร</th>`;
+      html += `</tr>`;
+
+      // 2. Header Row 2: Doctor count per day
+      html += `<tr style="background: #f1f5f9; font-size: 11px;">`;
+      html += `<th class="roster-sticky-col" style="background: #f1f5f9; color: var(--text-muted); font-size: 11px; z-index: 7;">รวมหมอเข้าเวร</th>`;
+      dates.forEach(dStr => {
+        const dObj = new Date(dStr + "T00:00:00");
+        const isWeekend = (dObj.getDay() === 0 || dObj.getDay() === 6);
+        const weekendClass = isWeekend ? 'roster-weekend-col' : '';
+        const onDutyCount = (cachedRosterMap[dStr] || []).length;
+        let badgeBg = '#dcfce7';
+        let badgeColor = '#15803d';
+        if (onDutyCount === 0) {
+          badgeBg = '#fee2e2';
+          badgeColor = '#b91c1c';
+        } else if (onDutyCount === 1) {
+          badgeBg = '#ffedd5';
+          badgeColor = '#c2410c';
+        }
+        html += `
+          <th class="${weekendClass}" style="padding: 4px 2px;" onclick="openDailyRosterModal('${dStr}')">
+            <span class="roster-count-badge" style="background: ${badgeBg}; color: ${badgeColor}; cursor: pointer;" title="คลิกเพื่อจัดเวร">
+              ${onDutyCount}
+            </span>
+          </th>
+        `;
+      });
+      html += `<th style="background: #f1f5f9;">-</th>`;
+      html += `</tr></thead>`;
+
+      // 3. Body Rows: Doctor rows
+      html += `<tbody>`;
+      rosterDoctorsList.forEach(doc => {
+        let docMonthDaysCount = 0;
+        html += `<tr>`;
+        html += `
+          <td class="roster-sticky-col">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>💆</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 700; color: var(--primary-dark); line-height: 1.2;">${doc.nickname || doc.name}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${doc.doctor_id}</div>
+              </div>
+            </div>
+          </td>
+        `;
+
+        dates.forEach(dStr => {
+          const dObj = new Date(dStr + "T00:00:00");
+          const isWeekend = (dObj.getDay() === 0 || dObj.getDay() === 6);
+          const weekendClass = isWeekend ? 'roster-weekend-col' : '';
+          const dayDutyDocs = cachedRosterMap[dStr] || [];
+          const isOnDuty = dayDutyDocs.includes(doc.doctor_id);
+
+          if (isOnDuty) docMonthDaysCount++;
+
+          if (isOnDuty) {
+            html += `
+              <td class="${weekendClass}">
+                <div class="roster-cell-duty" onclick="toggleDoctorDuty('${doc.doctor_id}', '${dStr}')" title="คลิกเพื่อปิดเวร">
+                  ✓
+                </div>
+              </td>
+            `;
+          } else {
+            html += `
+              <td class="${weekendClass}">
+                <div class="roster-cell-off" onclick="toggleDoctorDuty('${doc.doctor_id}', '${dStr}')" title="คลิกเพื่อให้อยู่เวร">
+                  -
+                </div>
+              </td>
+            `;
+          }
+        });
+
+        html += `
+          <td style="font-weight: 700; color: var(--primary); font-size: 12px; background: #fafafa;">
+            ${docMonthDaysCount} วัน
+          </td>
+        `;
+        html += `</tr>`;
+      });
+      html += `</tbody></table>`;
+
+      container.innerHTML = html;
+    }
+
+    function toggleDoctorDuty(doctorId, dateStr) {
+      if (!cachedRosterMap[dateStr]) {
+        cachedRosterMap[dateStr] = [];
+      }
+      const idx = cachedRosterMap[dateStr].indexOf(doctorId);
+      if (idx !== -1) {
+        cachedRosterMap[dateStr].splice(idx, 1);
+      } else {
+        cachedRosterMap[dateStr].push(doctorId);
+      }
+      renderRosterMatrix();
+    }
+
+    function quickFillRosterFromWeekly() {
+      if (!confirm(`⚡ ต้องการเติมตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)} อัตโนมัติตามวันประจำสัปดาห์ของหมอแต่ละคนใช่หรือไม่?`)) return;
+
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dd = String(i).padStart(2, '0');
+        const dateStr = `${currentRosterMonth}-${dd}`;
+        const dayOfWeek = new Date(dateStr + "T00:00:00").getDay();
+
+        const onDuty = rosterDoctorsList.filter(doc => {
+          return String(doc.work_days).split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+        }).map(doc => doc.doctor_id);
+
+        cachedRosterMap[dateStr] = onDuty;
+      }
+
+      renderRosterMatrix();
+      alert("⚡ เติมข้อมูลตามวันประจำสัปดาห์เรียบร้อยแล้ว! สามารถคลิกแก้ไขช่องที่ต้องการ แล้วกดปุ่ม '💾 บันทึกตารางเวรทั้งเดือน' ได้เลยครับ");
+    }
+
+    function setAllRosterState(state) {
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const allDocIds = rosterDoctorsList.map(d => d.doctor_id);
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dd = String(i).padStart(2, '0');
+        const dateStr = `${currentRosterMonth}-${dd}`;
+        cachedRosterMap[dateStr] = state ? [...allDocIds] : [];
+      }
+
+      renderRosterMatrix();
+    }
+
+    async function saveCurrentMonthRoster() {
+      const btn = document.getElementById("btnSaveRoster");
+      const originalText = btn.innerHTML;
+      btn.innerHTML = "⏳ กำลังบันทึกตารางเวร...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "save_monthly_roster",
+            month: currentRosterMonth,
+            roster: cachedRosterMap
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`💾 บันทึกตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)} เรียบร้อยแล้ว!\nระบบได้อัปเดตลง Google Sheet และคิวจองแบบเรียลไทม์`);
+        } else {
+          alert("เกิดข้อผิดพลาดในการบันทึก: " + (data.error || ""));
+        }
+      } catch (err) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // Daily Roster Modal
+    function openDailyRosterModal(dateStr) {
+      document.getElementById("dailyRosterModalDate").value = dateStr;
+      document.getElementById("dailyRosterModalTitle").textContent = `🗓️ จัดเวรวันที่ ${formatThaiDateWithDay(dateStr)}`;
+
+      const currentOnDuty = cachedRosterMap[dateStr] || [];
+      const listEl = document.getElementById("dailyRosterDoctorsList");
+      listEl.innerHTML = "";
+
+      rosterDoctorsList.forEach(doc => {
+        const isChecked = currentOnDuty.includes(doc.doctor_id);
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "8px";
+        label.style.fontSize = "13px";
+        label.style.padding = "6px 8px";
+        label.style.background = isChecked ? "#dcfce7" : "#ffffff";
+        label.style.border = `1px solid ${isChecked ? '#86efac' : '#e2e8f0'}`;
+        label.style.borderRadius = "6px";
+        label.style.cursor = "pointer";
+
+        label.innerHTML = `
+          <input type="checkbox" name="dailyRosterDoc" value="${doc.doctor_id}" ${isChecked ? 'checked' : ''} onchange="this.parentElement.style.background = this.checked ? '#dcfce7' : '#ffffff'; this.parentElement.style.borderColor = this.checked ? '#86efac' : '#e2e8f0'; updateDailyModalCount();">
+          <div>
+            <b>${doc.nickname || doc.name}</b>
+            <span style="font-size: 11px; color: var(--text-muted); display: block;">${doc.doctor_id} (${doc.work_start_time || '10:00'}-${doc.work_end_time || '20:00'})</span>
+          </div>
+        `;
+        listEl.appendChild(label);
+      });
+
+      updateDailyModalCount();
+      document.getElementById("dailyRosterModal").style.display = "flex";
+    }
+
+    function updateDailyModalCount() {
+      const checkedCount = document.querySelectorAll('#dailyRosterDoctorsList input[name="dailyRosterDoc"]:checked').length;
+      document.getElementById("dailyRosterCountLabel").textContent = `เลือกอยู่เวร: ${checkedCount} จาก ${rosterDoctorsList.length} ท่าน`;
+    }
+
+    function setDailyModalAll(state) {
+      const checkboxes = document.querySelectorAll('#dailyRosterDoctorsList input[name="dailyRosterDoc"]');
+      checkboxes.forEach(cb => {
+        cb.checked = state;
+        cb.parentElement.style.background = state ? "#dcfce7" : "#ffffff";
+        cb.parentElement.style.borderColor = state ? "#86efac" : "#e2e8f0";
+      });
+      updateDailyModalCount();
+    }
+
+    function applyDailyRosterModal() {
+      const dateStr = document.getElementById("dailyRosterModalDate").value;
+      const checkedIds = Array.from(document.querySelectorAll('#dailyRosterDoctorsList input[name="dailyRosterDoc"]:checked'))
+        .map(cb => cb.value);
+
+      cachedRosterMap[dateStr] = checkedIds;
+      closeDailyRosterModal();
+      renderRosterMatrix();
+    }
+
+    function closeDailyRosterModal() {
+      document.getElementById("dailyRosterModal").style.display = "none";
     }
 
     // ==========================================
