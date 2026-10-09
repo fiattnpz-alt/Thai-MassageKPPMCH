@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบแดชบอร์ดแอดมิน - คลินิกแพทย์แผนไทย</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --admin-bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+    }
+    body {
+      max-width: 100%;
+      background: var(--admin-bg);
+      padding-bottom: 50px;
+      font-family: -apple-system, BlinkMacSystemFont, "Sarabun", "Segoe UI", Roboto, sans-serif;
+    }
+    .admin-container {
+      width: 100%;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    /* Topbar */
+    .admin-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 16px 24px;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .admin-title-wrap h1 {
+      font-size: 20px;
+      color: var(--primary-dark);
+      margin: 0 0 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .admin-title-wrap p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .topbar-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Main Navigation Tabs */
+    .admin-nav {
+      display: flex;
+      gap: 8px;
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+    .nav-tab-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: #f8fafc;
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .nav-tab-btn:hover {
+      background: rgba(27, 67, 50, 0.08);
+      color: var(--primary);
+    }
+    .nav-tab-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
+      border-color: var(--primary-dark);
+    }
+
+    /* Panels */
+    .admin-panel {
+      display: none;
+    }
+    .admin-panel.active {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    /* Stats Bar */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: #ffffff;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--primary);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .stat-num {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 14px 20px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* Timeline Columns */
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+    }
+    .doc-column {
+      background: #ffffff;
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      border-top: 4px solid var(--primary);
+    }
+    .doc-column.on-leave {
+      border-top-color: #e53e3e;
+      background: #fff8f8;
+    }
+    .doc-column-title {
+      font-weight: 700;
+      color: var(--primary-dark);
+      font-size: 15px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .leave-badge {
+      background: #fed7d7;
+      color: #9b2c2c;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .admin-booking-item {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .admin-booking-item:hover {
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    .admin-booking-item.status-COMPLETED {
+      border-left: 5px solid #38a169;
+      background: #f7faf8;
+    }
+    .admin-booking-item.status-CANCELLED {
+      border-left: 5px solid #e53e3e;
+      background: #fff5f5;
+      opacity: 0.7;
+    }
+    .admin-booking-item.status-ARRIVED {
+      border-left: 5px solid #3182ce;
+      background: #f0f7ff;
+    }
+    .admin-booking-item.status-NO_SHOW {
+      border-left: 5px solid #d69e2e;
+      background: #fffdf5;
+    }
+
+    .booking-actions-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      align-items: center;
+    }
+    .status-select {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      background: #ffffff;
+      cursor: pointer;
+    }
+    .btn-delete-booking {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-delete-booking:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    /* Tables & Cards */
+    .content-card {
+      background: #ffffff;
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      margin-bottom: 20px;
+    }
+    .card-header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 0;
+    }
+    .admin-table-wrap {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 750px;
+    }
+    .admin-table th {
+      text-align: left;
+      padding: 12px 14px;
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .admin-table td {
+      padding: 14px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    .admin-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #cbd5e1;
+      transition: .3s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Monthly Duty Roster Matrix Styles */
+    .roster-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+      min-width: 1150px;
+    }
+    .roster-table th, .roster-table td {
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 6px 3px;
+      text-align: center;
+    }
+    .roster-sticky-col {
+      position: sticky;
+      left: 0;
+      background: #ffffff;
+      z-index: 5;
+      text-align: left !important;
+      padding-left: 10px !important;
+      font-weight: 600;
+      min-width: 150px;
+      max-width: 170px;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.06);
+    }
+    .roster-sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      background: #f8fafc;
+    }
+    .roster-header-cell {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+      min-width: 34px;
+    }
+    .roster-header-cell:hover {
+      background: #e2e8f0 !important;
+    }
+    .roster-cell-duty {
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 6px 2px;
+      margin: 1px;
+      transition: all 0.15s ease;
+      user-select: none;
+      font-size: 11px;
+    }
+    .roster-cell-duty:hover {
+      background: #bbf7d0;
+      transform: scale(1.06);
+    }
+    .roster-cell-off {
+      background: #f8fafc;
+      color: #94a3b8;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 6px 2px;
+      margin: 1px;
+      transition: all 0.15s ease;
+      user-select: none;
+      font-size: 11px;
+    }
+    .roster-cell-off:hover {
+      background: #e2e8f0;
+      color: #334155;
+      transform: scale(1.06);
+    }
+    .roster-weekend-col {
+      background: #fff5f5 !important;
+    }
+    .roster-count-badge {
+      display: inline-block;
+      padding: 1px 4px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* Modals */
+    .pin-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .pin-box {
+      background: #ffffff;
+      width: 100%;
+      max-width: 360px;
+      padding: 32px 24px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .pin-input {
+      letter-spacing: 12px;
+      font-size: 28px;
+      text-align: center;
+      width: 200px;
+      margin: 16px auto;
+      padding: 10px;
+      border: 2px solid var(--primary-light);
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 520px;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔒 PIN AUTHENTICATION OVERLAY -->
+  <div class="pin-overlay" id="pinOverlay">
+    <div class="pin-box">
+      <div style="font-size: 40px; margin-bottom: 8px;">🔐</div>
+      <h2 style="color: var(--primary-dark); margin: 0 0 6px 0; font-size: 20px;">แดชบอร์ดแอดมิน</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">กรุณาใส่รหัส PIN เพื่อเข้าใช้งาน</p>
+      
+      <form onsubmit="handlePinSubmit(event)">
+        <input type="password" id="pinInput" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" autofocus autocomplete="off">
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 12px; color: var(--text-muted); cursor: pointer;">
+            <input type="checkbox" id="rememberPinCheckbox" checked> จดจำการเข้าสู่ระบบในเครื่องนี้
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 15px;">เข้าสู่ระบบ</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 📱 MAIN ADMIN APP -->
+  <div class="admin-container" id="adminApp" style="display: none;">
+    <!-- Topbar -->
+    <div class="admin-topbar">
+      <div class="admin-title-wrap">
+        <h1>🌿 แดชบอร์ดแอดมินคลินิกแพทย์แผนไทย</h1>
+        <p id="topbarShopName">คลินิกแพทย์แผนไทย & นวดเพื่อสุขภาพ</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openWalkinModal()" style="font-size: 13px;">➕ เพิ่มคิวจองหน้าร้าน / Walk-in</button>
+        <a href="index.html" target="_blank" class="btn btn-secondary" style="font-size: 13px; text-decoration: none;">🌐 หน้าเว็บจองคิว</a>
+        <button class="btn btn-secondary" onclick="logoutAdmin()" style="font-size: 13px;">🔒 ล็อก</button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-nav">
+      <button class="nav-tab-btn active" id="tabBtnTimeline" onclick="switchAdminTab('timeline')">📅 ตารางคิวประจำวัน</button>
+      <button class="nav-tab-btn" id="tabBtnRoster" onclick="switchAdminTab('roster')">🗓️ ตารางเวรหมอรายเดือน</button>
+      <button class="nav-tab-btn" id="tabBtnAllBookings" onclick="switchAdminTab('all_bookings')">📋 รายการนัดหมายทั้งหมด (ค้นหา/ลบ)</button>
+      <button class="nav-tab-btn" id="tabBtnLeaves" onclick="switchAdminTab('leaves')">🏖️ จัดการวันลาหมอนวด</button>
+      <button class="nav-tab-btn" id="tabBtnServices" onclick="switchAdminTab('services')">💆‍♀️ จัดการบริการ & ราคา (เพิ่ม/ลด/ลบ)</button>
+      <button class="nav-tab-btn" id="tabBtnDoctors" onclick="switchAdminTab('doctors')">👨‍⚕️ รายชื่อหมอนวด</button>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 1: TIMELINE (DAILY BOOKINGS) -->
+    <!-- ================================================================= -->
+    <div class="admin-panel active" id="tabPanelTimeline">
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">คิวทั้งหมดวันที่เลือก</div>
+          <div class="stat-num" id="statTotal">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: #3182ce;">
+          <div class="stat-label">รอดำเนินการ / ยืนยันแล้ว</div>
+          <div class="stat-num" id="statConfirmed" style="color: #3182ce;">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: #38a169;">
+          <div class="stat-label">นวดเสร็จสิ้น</div>
+          <div class="stat-num" id="statCompleted" style="color: #38a169;">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: #e53e3e;">
+          <div class="stat-label">ยกเลิก / ไม่มา</div>
+          <div class="stat-num" id="statCancelled" style="color: #e53e3e;">0</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-bar">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <label style="font-weight: 700; font-size: 14px;">📅 เลือกวันที่ดูคิว:</label>
+          <input type="date" id="adminDateInput" class="input-date" style="width: auto; padding: 8px 12px;" onchange="loadAdminDayView()">
+          <button class="btn btn-primary" onclick="loadAdminDayView()" style="padding: 8px 16px; font-size: 13px;">🔄 รีเฟรช</button>
+          <button class="btn btn-secondary" onclick="openWalkinModal()" style="padding: 8px 16px; font-size: 13px;">➕ เพิ่มคิววันนี้</button>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted);">
+          รอบเวลาคงที่ 4 ช่วง: <b>09:00-10:15</b> | <b>10:30-11:45</b> | <b>13:00-14:15</b> | <b>14:30-15:45</b>
+        </div>
+      </div>
+
+      <!-- Doctors Columns Grid -->
+      <div class="timeline-grid" id="doctorsTimelineGrid">
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted);">
+          กำลังโหลดตารางคิว...
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB: MONTHLY DOCTOR DUTY ROSTER (ตารางเวรหมอรายเดือน) -->
+    <!-- ================================================================= -->
+    <div class="admin-panel" id="tabPanelRoster">
+      <div class="content-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">🗓️ ตารางจัดเวรหมอนวดรายเดือน (Monthly Duty Roster)</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              กำหนดวันเข้าเวรของหมอทุกคนในแต่ละเดือน จิ้มเลือกได้ทีละวัน หรือเติมตามวันประจำสัปดาห์ แล้วกดบันทึก
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button class="btn btn-secondary" onclick="quickFillRosterFromWeekly()" title="ดึงวันเข้าเวรประจำของทุกคนมาใส่ทั้งเดือนอัตโนมัติ">
+              ⚡ เติมตามวันประจำ (Quick Fill)
+            </button>
+            <button class="btn btn-secondary" onclick="setAllRosterState(true)" title="เลือกให้ทุกคนอยู่เวรทุกวัน">
+              👥 เลือกทุกคน
+            </button>
+            <button class="btn btn-secondary" onclick="setAllRosterState(false)" style="color: #c5221f;" title="ล้างตารางเวรของเดือนนี้">
+              🧹 ล้างเวร
+            </button>
+            <button class="btn btn-primary" onclick="saveCurrentMonthRoster()" id="btnSaveRoster" style="font-size: 14px; padding: 10px 20px; background: #15803d; border-color: #166534;">
+              💾 บันทึกตารางเวรทั้งเดือน
+            </button>
+          </div>
+        </div>
+
+        <!-- Month Navigation Controls -->
+        <div class="controls-bar" style="background: #f1f5f9; border: 1px solid var(--border-color); margin-bottom: 20px;">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-secondary" onclick="changeRosterMonthOffset(-1)">◀ เดือนก่อนหน้า</button>
+            <input type="month" id="rosterMonthPicker" class="form-input" style="width: auto; padding: 8px 14px; font-weight: 700; font-size: 15px;" onchange="onRosterMonthChange()">
+            <button class="btn btn-secondary" onclick="changeRosterMonthOffset(1)">เดือนถัดไป ▶</button>
+            <span id="rosterMonthTitleTh" style="font-size: 16px; font-weight: 700; color: var(--primary-dark); margin-left: 8px;"></span>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 14px; height: 14px; background: #dcfce7; border: 1px solid #86efac; border-radius: 3px;"></span> = อยู่เวร (คลิกเพื่อเปลี่ยน)</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 14px; height: 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 3px;"></span> = หยุด</span>
+            <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 14px; height: 14px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 3px;"></span> = ส.-อา.</span>
+          </div>
+        </div>
+
+        <!-- Matrix Table Container -->
+        <div class="admin-table-wrap" id="rosterTableContainer" style="max-height: 650px; overflow: auto;">
+          <div style="text-align: center; padding: 50px; color: var(--text-muted);">
+            กำลังโหลดตารางเวรประจำเดือน...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 2: ALL BOOKINGS LIST & SEARCH (SEARCH / DELETE) -->
+    <!-- ================================================================= -->
+    <div class="admin-panel" id="tabPanelAllBookings">
+      <div class="content-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">📋 รายการนัดหมายทั้งหมดในระบบ</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              ค้นหาประวัติการจองตามชื่อ หรือเบอร์โทรศัพท์ และสามารถลบคิวออกจากฐานข้อมูลได้
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="searchBookingInput" class="form-input" placeholder="🔍 พิมพ์ชื่อ, เบอร์โทร, รหัสจอง..." style="width: 250px; padding: 8px 12px;" oninput="filterAllBookings()">
+            <button class="btn btn-primary" onclick="loadAllBookingsAdmin()" style="font-size: 13px;">🔄 รีเฟรช</button>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัสจอง</th>
+                <th>วันที่นัด</th>
+                <th>รอบเวลา</th>
+                <th>ชื่อคนไข้ / เบอร์โทร</th>
+                <th>เลขบัตร ปชช.</th>
+                <th>บริการ</th>
+                <th>หมอนวด</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="allBookingsTableBody">
+              <tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายการจอง...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: DOCTOR LEAVES -->
+    <!-- ================================================================= -->
+    <div class="admin-panel" id="tabPanelLeaves">
+      <div class="content-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">🏖️ จัดการวันลาของหมอนวด</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              เมื่อบันทึกวันลา ระบบจะตัดหมอท่านนี้ออกจากรอบจองของวันดังกล่าวให้อัตโนมัติ (ลูกค้าจะจองหมอคนนี้ไม่ได้)
+            </p>
+          </div>
+        </div>
+
+        <!-- Add Leave Form -->
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <h3 style="font-size: 15px; margin: 0 0 14px 0; color: var(--primary);">➕ บันทึกวันลาใหม่</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 120px; gap: 12px; align-items: flex-end;">
+            <div>
+              <label class="form-label">เลือกหมอนวด:</label>
+              <select id="leaveDoctorSelect" class="form-input" style="padding: 9px 12px;">
+                <option value="">กำลังโหลดรายชื่อหมอ...</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">วันที่ลา:</label>
+              <input type="date" id="leaveDateInput" class="form-input" style="padding: 8px 12px;">
+            </div>
+            <div>
+              <label class="form-label">เหตุผลการลา:</label>
+              <input type="text" id="leaveReasonInput" class="form-input" placeholder="เช่น ลากิจ, ลาป่วย, ติดธุระ" style="padding: 9px 12px;">
+            </div>
+            <div>
+              <button class="btn btn-primary" onclick="submitAddLeave()" style="width: 100%; padding: 11px;">บันทึกวันลา</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaves Table -->
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>ชื่อหมอนวด</th>
+                <th>วันที่ลา</th>
+                <th>เหตุผล</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="leavesTableBody">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">กำลังโหลดข้อมูลวันลา...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 4: SERVICES MANAGEMENT (ADD / EDIT / DELETE / TOGGLE) -->
+    <!-- ================================================================= -->
+    <div class="admin-panel" id="tabPanelServices">
+      <div class="content-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">💆‍♀️ จัดการรายการบริการ & ราคา</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              เพิ่มบริการใหม่, แก้ไขราคา, ปิดเปิดบริการ หรือลบบริการออกจากระบบได้โดยตรง
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddServiceModal()" style="font-size: 14px; padding: 10px 18px;">
+            ➕ เพิ่มบริการใหม่
+          </button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัสบริการ</th>
+                <th>ชื่อบริการ</th>
+                <th>เวลา (นาที)</th>
+                <th>ราคา (บาท)</th>
+                <th>คำอธิบาย</th>
+                <th>เปิด/ปิดบริการ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="servicesTableBody">
+              <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">กำลังโหลดบริการ...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 5: DOCTORS -->
+    <!-- ================================================================= -->
+    <div class="admin-panel" id="tabPanelDoctors">
+      <div class="content-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-title">👨‍⚕️ จัดการรายชื่อหมอนวด & ตารางเวร</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">
+              เพิ่มหมอใหม่, กำหนดวันเข้าเวร, ทักษะบริการที่ทำได้, ปิด/เปิดรับคิว หรือลบข้อมูลหมอได้โดยตรง
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddDoctorModal()" style="font-size: 14px; padding: 10px 18px;">
+            ➕ เพิ่มหมอนวดใหม่
+          </button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>รหัสหมอ</th>
+                <th>ชื่อ-นามสกุล</th>
+                <th>ชื่อเล่น</th>
+                <th>เบอร์โทร</th>
+                <th>วันเข้าเวร</th>
+                <th>เวลาทำงาน</th>
+                <th>ทักษะบริการ</th>
+                <th>รับคิว</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="doctorsTableBody">
+              <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">กำลังโหลดรายชื่อหมอ...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- ✏️ MODAL: ADD / EDIT SERVICE -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="serviceModal">
+    <div class="modal-card">
+      <h3 style="margin: 0 0 16px 0; color: var(--primary);" id="serviceModalTitle">➕ เพิ่มบริการใหม่</h3>
+      <input type="hidden" id="modalServiceId">
+      
+      <div class="form-group">
+        <label class="form-label">ชื่อบริการ *</label>
+        <input type="text" id="modalServiceName" class="form-input" placeholder="เช่น นวดแก้อาการออฟฟิศซินโดรม">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">ระยะเวลา (นาที) *</label>
+          <input type="number" id="modalServiceDuration" class="form-input" placeholder="75" value="75">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ราคา (บาท) *</label>
+          <input type="number" id="modalServicePrice" class="form-input" placeholder="500">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">คำอธิบายบริการ</label>
+        <textarea id="modalServiceDesc" class="form-input" rows="3" placeholder="ระบุรายละเอียดสั้นๆ"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeServiceModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitSaveService()">บันทึกข้อมูลบริการ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- 👨‍⚕️ MODAL: ADD / EDIT DOCTOR -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="doctorModal">
+    <div class="modal-card" style="max-width: 620px;">
+      <h3 style="margin: 0 0 16px 0; color: var(--primary);" id="doctorModalTitle">➕ เพิ่มหมอนวดใหม่</h3>
+      <input type="hidden" id="modalDoctorId">
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">ชื่อ - นามสกุล *</label>
+          <input type="text" id="modalDoctorName" class="form-input" placeholder="เช่น สมศรี นวดดี">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อเล่น / ชื่อเรียกหมอ *</label>
+          <input type="text" id="modalDoctorNickname" class="form-input" placeholder="เช่น หมอสมศรี">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">เบอร์โทรศัพท์</label>
+          <input type="tel" id="modalDoctorPhone" class="form-input" placeholder="เช่น 081-111-0001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">เวลาเข้าเวร (เริ่ม - เลิก)</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="time" id="modalDoctorStartTime" class="form-input" value="10:00" style="padding: 6px 8px;">
+            <span>ถึง</span>
+            <input type="time" id="modalDoctorEndTime" class="form-input" value="20:00" style="padding: 6px 8px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label class="form-label" style="margin: 0;">ตารางวันเข้าเวรประจำสัปดาห์ *</label>
+          <span style="font-size: 12px; color: var(--primary); cursor: pointer;" onclick="selectAllDoctorDays(true)">เลือกทุกวัน</span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="doctorWorkDaysCheckboxes">
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; background: #fff1f2; padding: 6px 10px; border-radius: 8px; border: 1px solid #fecdd3; cursor: pointer;">
+            <input type="checkbox" name="workDay" value="0"> อาทิตย์
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; background: #fefce8; padding: 6px 10px; border-radius: 8px; border: 1px solid #fef08a; cursor: pointer;">
+            <input type="checkbox" name="workDay" value="1"> จันทร์
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; background: #fdf2f8; padding: 6px 10px; border-radius: 8px; border: 1px solid #fbcfe8; cursor: pointer;">
+            <input type="checkbox" name="workDay" value="2"> อังคาร
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; background: #f0fdf4; padding: 6px 10px; border-radius: 8px; border: 1px solid #bbf7d0; cursor: pointer;">
+            <input type="checkbox" name="workDay" value="3"> พุธ
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; background: #fff7ed; padding: 6px 10px; border-radius: 8px; border: 1px solid #fed7aa; cursor: pointer;">
+            <input type="checkbox" name="workDay" value="4"> พฤหัสฯ
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; background: #eff6ff; padding: 6px 10px; border-radius: 8px; border: 1px solid #bfdbfe; cursor: pointer;">
+            <input type="checkbox" name="workDay" value="5"> ศุกร์
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; background: #faf5ff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e9d5ff; cursor: pointer;">
+            <input type="checkbox" name="workDay" value="6"> เสาร์
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ทักษะบริการที่ทำได้ (เลือกจากรายการบริการในคลินิก) *</label>
+        <div id="doctorSkillsCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 160px; overflow-y: auto; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color);">
+          <span style="font-size: 12px; color: var(--text-muted);">กำลังโหลดบริการ...</span>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeDoctorModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitSaveDoctor()">💾 บันทึกข้อมูลหมอ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- 🗓️ MODAL: DAILY ROSTER EDITOR (จัดเวรเฉพาะวัน) -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="dailyRosterModal">
+    <div class="modal-card" style="max-width: 550px;">
+      <h3 style="margin: 0 0 8px 0; color: var(--primary);" id="dailyRosterModalTitle">🗓️ จัดเวรประจำวัน</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px 0;">
+        ติ๊กเลือกหมอนวดที่ต้องการให้อยู่เวรในวันที่นี้
+      </p>
+      <input type="hidden" id="dailyRosterModalDate">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span id="dailyRosterCountLabel" style="font-weight: 600; font-size: 13px; color: var(--primary);"></span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="setDailyModalAll(true)">เลือกทุกคน</button>
+          <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="setDailyModalAll(false)">ยกเลิกทุกคน</button>
+        </div>
+      </div>
+
+      <div id="dailyRosterDoctorsList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 320px; overflow-y: auto; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color);">
+        <!-- dynamically rendered doctor checkboxes -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeDailyRosterModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="applyDailyRosterModal()">✓ นำไปใช้ในตาราง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- ➕ MODAL: WALKIN / MANUAL BOOKING -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="walkinModal">
+    <div class="modal-card">
+      <h3 style="margin: 0 0 16px 0; color: var(--primary);">➕ บันทึกคิวจองหน้าร้าน / Walk-in</h3>
+      
+      <div class="form-group">
+        <label class="form-label">ชื่อ - นามสกุล คนไข้ *</label>
+        <input type="text" id="walkinCustName" class="form-input" placeholder="สมชาย ใจดี">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เลขประจำตัวประชาชน 13 หลัก</label>
+        <input type="tel" id="walkinCustIdCard" class="form-input" placeholder="xxxxxxxxxxxxx" maxlength="13">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เบอร์โทรศัพท์ติดต่อ *</label>
+        <input type="tel" id="walkinCustPhone" class="form-input" placeholder="08xxxxxxxx">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">วันที่นัดหมาย *</label>
+          <input type="date" id="walkinDate" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รอบเวลา *</label>
+          <select id="walkinTimeSlot" class="form-input">
+            <option value="09:00">09:00 - 10:15 น.</option>
+            <option value="10:30">10:30 - 11:45 น.</option>
+            <option value="13:00">13:00 - 14:15 น.</option>
+            <option value="14:30">14:30 - 15:45 น.</option>
+          </select>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">บริการ *</label>
+          <select id="walkinServiceSelect" class="form-input">
+            <option value="">กำลังโหลดบริการ...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมอนวด *</label>
+          <select id="walkinDoctorSelect" class="form-input">
+            <option value="ANY">ใครก็ได้ (ระบบจัดสรร)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">หมายเหตุ / อาการ</label>
+        <input type="text" id="walkinNotes" class="form-input" placeholder="เช่น Walk-in หน้าร้าน, นวดแก้อาการ">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeWalkinModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitWalkinBooking()">บันทึกคิวจอง</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // ==========================================
+    // 1. PIN Security Logic
+    // ==========================================
+    const DEFAULT_PIN = (typeof CONFIG !== "undefined" && CONFIG.ADMIN_PIN) ? String(CONFIG.ADMIN_PIN) : "8888";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedAuth = localStorage.getItem("admin_authenticated");
+      if (savedAuth === "true") {
+        unlockAdmin();
+      } else {
+        document.getElementById("pinOverlay").style.display = "flex";
+      }
+
+      // ตั้งค่าวันปัจจุบันให้ช่องวันที่
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("adminDateInput").value = today;
+      document.getElementById("leaveDateInput").value = today;
+      document.getElementById("leaveDateInput").min = today;
+      document.getElementById("walkinDate").value = today;
+    });
+
+    function handlePinSubmit(e) {
+      e.preventDefault();
+      const enteredPin = document.getElementById("pinInput").value.trim();
+      if (enteredPin === DEFAULT_PIN) {
+        if (document.getElementById("rememberPinCheckbox").checked) {
+          localStorage.setItem("admin_authenticated", "true");
+        }
+        unlockAdmin();
+      } else {
+        alert("รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
+        document.getElementById("pinInput").value = "";
+        document.getElementById("pinInput").focus();
+      }
+    }
+
+    function unlockAdmin() {
+      document.getElementById("pinOverlay").style.display = "none";
+      document.getElementById("adminApp").style.display = "block";
+      if (typeof CONFIG !== "undefined" && CONFIG.SHOP_NAME) {
+        document.getElementById("topbarShopName").textContent = CONFIG.SHOP_NAME;
+      }
+      loadAdminDayView();
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem("admin_authenticated");
+      location.reload();
+    }
+
+    // ==========================================
+    // 2. Navigation Tabs Logic
+    // ==========================================
+    function switchAdminTab(tabName) {
+      document.querySelectorAll(".nav-tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".admin-panel").forEach(panel => panel.classList.remove("active"));
+
+      if (tabName === "timeline") {
+        document.getElementById("tabBtnTimeline").classList.add("active");
+        document.getElementById("tabPanelTimeline").classList.add("active");
+        loadAdminDayView();
+      } else if (tabName === "roster") {
+        document.getElementById("tabBtnRoster").classList.add("active");
+        document.getElementById("tabPanelRoster").classList.add("active");
+        loadMonthlyRoster();
+      } else if (tabName === "all_bookings") {
+        document.getElementById("tabBtnAllBookings").classList.add("active");
+        document.getElementById("tabPanelAllBookings").classList.add("active");
+        loadAllBookingsAdmin();
+      } else if (tabName === "leaves") {
+        document.getElementById("tabBtnLeaves").classList.add("active");
+        document.getElementById("tabPanelLeaves").classList.add("active");
+        loadDoctorLeaves();
+      } else if (tabName === "services") {
+        document.getElementById("tabBtnServices").classList.add("active");
+        document.getElementById("tabPanelServices").classList.add("active");
+        loadAdminServices();
+      } else if (tabName === "doctors") {
+        document.getElementById("tabBtnDoctors").classList.add("active");
+        document.getElementById("tabPanelDoctors").classList.add("active");
+        loadAdminDoctors();
+      }
+    }
+
+    // ==========================================
+    // 3. Tab 1: Day Timeline Logic
+    // ==========================================
+    async function loadAdminDayView() {
+      const date = document.getElementById("adminDateInput").value;
+      const grid = document.getElementById("doctorsTimelineGrid");
+      grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted);">กำลังโหลดข้อมูลวันที่ ${date}...</div>`;
+
+      if (!CONFIG.API_URL || CONFIG.API_URL.startsWith("ใส่_")) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: red;">กรุณาตั้งค่า API_URL ใน config.js</div>`;
+        return;
+      }
+
+      try {
+        const [resTimeline, resLeaves] = await Promise.all([
+          fetch(`${CONFIG.API_URL}?action=admin_day_view&date=${date}`).then(r => r.json()),
+          fetch(`${CONFIG.API_URL}?action=admin_get_leaves`).then(r => r.json()).catch(() => ({ leaves: [] }))
+        ]);
+
+        if (resTimeline.success) {
+          const leavesToday = (resLeaves.leaves || []).filter(l => l.leave_date === date).map(l => l.doctor_id);
+          renderAdminTimeline(resTimeline.doctors || [], resTimeline.bookings || [], leavesToday);
+          calculateStats(resTimeline.bookings || []);
+        } else {
+          grid.innerHTML = `<div style="color: red; text-align: center;">เกิดข้อผิดพลาด: ${resTimeline.error}</div>`;
+        }
+      } catch (err) {
+        grid.innerHTML = `<div style="color: red; text-align: center;">ไม่สามารถเชื่อมต่อ Google Sheets API ได้</div>`;
+      }
+    }
+
+    function calculateStats(bookings) {
+      document.getElementById("statTotal").textContent = bookings.length;
+      document.getElementById("statConfirmed").textContent = bookings.filter(b => b.status === "CONFIRMED" || b.status === "ARRIVED").length;
+      document.getElementById("statCompleted").textContent = bookings.filter(b => b.status === "COMPLETED").length;
+      document.getElementById("statCancelled").textContent = bookings.filter(b => b.status === "CANCELLED" || b.status === "NO_SHOW").length;
+    }
+
+    function renderAdminTimeline(doctors, bookings, leavesToday) {
+      const grid = document.getElementById("doctorsTimelineGrid");
+      grid.innerHTML = "";
+
+      if (doctors.length === 0) {
+        grid.innerHTML = `<div style="text-align: center; padding: 40px;">ไม่พบข้อมูลหมอนวด</div>`;
+        return;
+      }
+
+      doctors.forEach(doc => {
+        const isDocOnLeave = leavesToday.includes(doc.doctor_id);
+        const docBookings = bookings.filter(b => b.doctor_id === doc.doctor_id);
+        const col = document.createElement("div");
+        col.className = `doc-column ${isDocOnLeave ? 'on-leave' : ''}`;
+
+        let bookingsHtml = "";
+        if (isDocOnLeave) {
+          bookingsHtml = `<div style="text-align: center; padding: 24px; color: #c53030; font-size: 13px; font-weight: 600;">🚫 วันนี้หมอท่านนี้ลางาน</div>`;
+        } else if (docBookings.length === 0) {
+          bookingsHtml = `<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">ไม่มีคิวนัดหมาย</div>`;
+        } else {
+          docBookings.forEach(b => {
+            bookingsHtml += `
+              <div class="admin-booking-item status-${b.status || 'CONFIRMED'}">
+                <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 13px;">
+                  <span style="color: var(--primary); font-size: 14px;">⏰ ${b.start_time} - ${b.end_time} น.</span>
+                  <span style="font-size: 11px; color: #888;">${b.booking_id}</span>
+                </div>
+                <div style="font-weight: 700; font-size: 14px; margin: 6px 0 2px 0;">👤 ${b.customer_name || 'ลูกค้า'}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">📞 เบอร์: <b>${b.customer_phone || '-'}</b></div>
+                ${b.id_card && b.id_card !== '-' ? `<div style="font-size: 11px; color: #64748b;">🪪 ปชช: ${b.id_card}</div>` : ''}
+                <div style="font-size: 12px; color: var(--primary); font-weight: 600; margin-top: 4px;">🌿 ${b.service_name}</div>
+                ${b.notes && b.notes !== '-' ? `<div style="font-size: 11px; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; margin-top: 4px;">📝 ${b.notes}</div>` : ''}
+                
+                <div class="booking-actions-row">
+                  <select class="status-select" onchange="updateBookingStatus('${b.booking_id}', this.value)">
+                    <option value="CONFIRMED" ${b.status === 'CONFIRMED' ? 'selected' : ''}>⏳ ยืนยันแล้ว</option>
+                    <option value="ARRIVED" ${b.status === 'ARRIVED' ? 'selected' : ''}>🚶 มาถึงร้านแล้ว</option>
+                    <option value="COMPLETED" ${b.status === 'COMPLETED' ? 'selected' : ''}>✅ นวดเสร็จสิ้น</option>
+                    <option value="NO_SHOW" ${b.status === 'NO_SHOW' ? 'selected' : ''}>🚫 ไม่มาตามนัด</option>
+                    <option value="CANCELLED" ${b.status === 'CANCELLED' ? 'selected' : ''}>❌ ยกเลิก</option>
+                  </select>
+                  <button class="btn-delete-booking" title="ลบคิวนี้ออกจากชีต" onclick="deleteBookingClick('${b.booking_id}')">ลบ</button>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        col.innerHTML = `
+          <div class="doc-column-title">
+            <span>💆 ${doc.nickname || doc.name}</span>
+            ${isDocOnLeave ? '<span class="leave-badge">ลางาน</span>' : `<span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">${docBookings.length} คิว</span>`}
+          </div>
+          ${bookingsHtml}
+        `;
+        grid.appendChild(col);
+      });
+    }
+
+    async function updateBookingStatus(bookingId, newStatus) {
+      try {
+        await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "update_status",
+            booking_id: bookingId,
+            status: newStatus
+          })
+        });
+        loadAdminDayView();
+      } catch (e) {
+        alert("ไม่สามารถบันทึกสถานะได้");
+      }
+    }
+
+    async function deleteBookingClick(bookingId) {
+      if (!confirm(`⚠️ คำเตือน: คุณต้องการลบคิวรหัส ${bookingId} ออกจาก Google Sheet อย่างถาวรใช่หรือไม่?`)) return;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "delete_booking",
+            booking_id: bookingId
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ลบคิวออกจากฐานข้อมูลเรียบร้อยแล้ว");
+          loadAdminDayView();
+          if (document.getElementById("tabPanelAllBookings").classList.contains("active")) {
+            loadAllBookingsAdmin();
+          }
+        } else {
+          alert("ไม่สามารถลบได้: " + (data.error || "เกิดข้อผิดพลาด"));
+        }
+      } catch (e) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      }
+    }
+
+    // ==========================================
+    // 4. Tab 2: All Bookings List & Search
+    // ==========================================
+    let cachedAllBookings = [];
+
+    async function loadAllBookingsAdmin() {
+      const tbody = document.getElementById("allBookingsTableBody");
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายการจองทั้งหมด...</td></tr>`;
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}?action=admin_all_bookings`);
+        const data = await res.json();
+        if (data.success) {
+          cachedAllBookings = data.bookings || [];
+          renderAllBookingsTable(cachedAllBookings);
+        } else {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: red;">เกิดข้อผิดพลาด: ${data.error}</td></tr>`;
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: red;">ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้</td></tr>`;
+      }
+    }
+
+    function renderAllBookingsTable(bookings) {
+      const tbody = document.getElementById("allBookingsTableBody");
+      tbody.innerHTML = "";
+
+      if (bookings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">ไม่พบข้อมูลการจอง</td></tr>`;
+        return;
+      }
+
+      bookings.forEach(b => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><b>${b.booking_id}</b></td>
+          <td>📅 <b>${b.date}</b></td>
+          <td>⏰ ${b.start_time} - ${b.end_time} น.</td>
+          <td><b>${b.customer_name}</b><br><span style="font-size: 11px; color: #64748b;">📞 ${b.customer_phone}</span></td>
+          <td>${b.id_card && b.id_card !== '-' ? b.id_card : '-'}</td>
+          <td style="color: var(--primary); font-weight: 600;">🌿 ${b.service_name}</td>
+          <td>💆 ${b.doctor_name}</td>
+          <td>
+            <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; ${b.status === 'COMPLETED' ? 'background: #dcfce7; color: #166534;' : (b.status === 'CANCELLED' ? 'background: #fee2e2; color: #991b1b;' : 'background: #e0f2fe; color: #075985;')}">
+              ${b.status}
+            </span>
+          </td>
+          <td>
+            <button class="btn-delete-booking" onclick="deleteBookingClick('${b.booking_id}')">ลบ</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterAllBookings() {
+      const query = document.getElementById("searchBookingInput").value.toLowerCase().trim();
+      if (!query) {
+        renderAllBookingsTable(cachedAllBookings);
+        return;
+      }
+      const filtered = cachedAllBookings.filter(b => 
+        (b.customer_name && b.customer_name.toLowerCase().includes(query)) ||
+        (b.customer_phone && b.customer_phone.includes(query)) ||
+        (b.booking_id && b.booking_id.toLowerCase().includes(query)) ||
+        (b.doctor_name && b.doctor_name.toLowerCase().includes(query)) ||
+        (b.id_card && b.id_card.includes(query))
+      );
+      renderAllBookingsTable(filtered);
+    }
+
+    // ==========================================
+    // 5. Tab 3: Doctor Leaves Logic
+    // ==========================================
+    async function loadDoctorLeaves() {
+      const tbody = document.getElementById("leavesTableBody");
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดข้อมูลวันลา...</td></tr>`;
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}?action=admin_get_leaves`);
+        const data = await res.json();
+
+        if (data.success) {
+          const select = document.getElementById("leaveDoctorSelect");
+          select.innerHTML = '<option value="">-- เลือกหมอนวด --</option>';
+          (data.doctors || []).forEach(d => {
+            select.innerHTML += `<option value="${d.doctor_id}">${d.nickname || d.name} (${d.doctor_id})</option>`;
+          });
+
+          tbody.innerHTML = "";
+          if (!data.leaves || data.leaves.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">ยังไม่มีประวัติการลา</td></tr>`;
+            return;
+          }
+
+          data.leaves.forEach(l => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><b>${l.leave_id}</b></td>
+              <td>💆 <b>${l.doctor_name}</b></td>
+              <td>📅 ${l.leave_date}</td>
+              <td>${l.reason}</td>
+              <td>
+                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; color: #e53e3e;" onclick="deleteLeave('${l.leave_id}')">
+                  ❌ ยกเลิกวันลา
+                </button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color: red; text-align: center;">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+      }
+    }
+
+    async function submitAddLeave() {
+      const docId = document.getElementById("leaveDoctorSelect").value;
+      const leaveDate = document.getElementById("leaveDateInput").value;
+      const reason = document.getElementById("leaveReasonInput").value.trim() || "ลางาน";
+
+      if (!docId) { alert("กรุณาเลือกหมอนวด"); return; }
+      if (!leaveDate) { alert("กรุณาเลือกวันที่ลา"); return; }
+
+      if (!confirm(`ยืนยันการบันทึกวันลาวันที่ ${leaveDate} ใช่หรือไม่?`)) return;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "add_doctor_leave",
+            doctor_id: docId,
+            leave_date: leaveDate,
+            reason: reason
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("บันทึกวันลาเรียบร้อยแล้ว");
+          document.getElementById("leaveReasonInput").value = "";
+          loadDoctorLeaves();
+        } else {
+          alert("เกิดข้อผิดพลาด: " + data.error);
+        }
+      } catch (e) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      }
+    }
+
+    async function deleteLeave(leaveId) {
+      if (!confirm(`คุณต้องการยกเลิกวันลารหัส ${leaveId} ใช่หรือไม่? หมอจะกลับมาว่างในระบบทันที`)) return;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "remove_doctor_leave",
+            leave_id: leaveId
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ยกเลิกวันลาเรียบร้อยแล้ว");
+          loadDoctorLeaves();
+        } else {
+          alert("เกิดข้อผิดพลาด: " + data.error);
+        }
+      } catch (e) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      }
+    }
+
+    // ==========================================
+    // 6. Tab 4: Services Management (Add / Edit / Delete / Toggle)
+    // ==========================================
+    let cachedServices = [];
+
+    async function loadAdminServices() {
+      const tbody = document.getElementById("servicesTableBody");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดบริการ...</td></tr>`;
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}?action=admin_get_services`);
+        const data = await res.json();
+
+        if (data.success) {
+          cachedServices = data.services || [];
+          tbody.innerHTML = "";
+
+          cachedServices.forEach(s => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><b>${s.service_id}</b></td>
+              <td><b>${s.name}</b></td>
+              <td>⏱️ ${s.duration_mins} นาที</td>
+              <td><b style="color: var(--gold); font-size: 15px;">${Number(s.price).toLocaleString()} ฿</b></td>
+              <td style="color: var(--text-muted); font-size: 12px; max-width: 250px;">${s.description || '-'}</td>
+              <td>
+                <label class="switch">
+                  <input type="checkbox" ${s.is_active ? 'checked' : ''} onchange="toggleService('${s.service_id}', this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="editService('${s.service_id}')">
+                    ✏️ แก้ไข
+                  </button>
+                  <button class="btn-delete-booking" style="padding: 6px 10px; font-size: 12px;" onclick="deleteServiceClick('${s.service_id}')">
+                    🗑️ ลบ
+                  </button>
+                </div>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color: red; text-align: center;">เกิดข้อผิดพลาดในการโหลดบริการ</td></tr>`;
+      }
+    }
+
+    async function toggleService(serviceId, isActive) {
+      try {
+        await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "toggle_service_active",
+            service_id: serviceId,
+            is_active: isActive
+          })
+        });
+      } catch (e) {
+        alert("ไม่สามารถเปลี่ยนสถานะบริการได้");
+      }
+    }
+
+    function openAddServiceModal() {
+      document.getElementById("serviceModalTitle").textContent = "➕ เพิ่มบริการใหม่";
+      document.getElementById("modalServiceId").value = "";
+      document.getElementById("modalServiceName").value = "";
+      document.getElementById("modalServiceDuration").value = "75";
+      document.getElementById("modalServicePrice").value = "";
+      document.getElementById("modalServiceDesc").value = "";
+      document.getElementById("serviceModal").style.display = "flex";
+    }
+
+    function editService(serviceId) {
+      const s = cachedServices.find(item => item.service_id === serviceId);
+      if (!s) return;
+
+      document.getElementById("serviceModalTitle").textContent = "✏️ แก้ไขบริการ " + s.service_id;
+      document.getElementById("modalServiceId").value = s.service_id;
+      document.getElementById("modalServiceName").value = s.name;
+      document.getElementById("modalServiceDuration").value = s.duration_mins;
+      document.getElementById("modalServicePrice").value = s.price;
+      document.getElementById("modalServiceDesc").value = s.description || "";
+      document.getElementById("serviceModal").style.display = "flex";
+    }
+
+    function closeServiceModal() {
+      document.getElementById("serviceModal").style.display = "none";
+    }
+
+    async function submitSaveService() {
+      const serviceId = document.getElementById("modalServiceId").value;
+      const name = document.getElementById("modalServiceName").value.trim();
+      const duration = document.getElementById("modalServiceDuration").value;
+      const price = document.getElementById("modalServicePrice").value;
+      const desc = document.getElementById("modalServiceDesc").value.trim();
+
+      if (!name) { alert("กรุณากรอกชื่อบริการ"); return; }
+      if (!price) { alert("กรุณากรอกราคา"); return; }
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "save_service",
+            service_id: serviceId,
+            name: name,
+            duration_mins: duration,
+            price: price,
+            description: desc
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("บันทึกข้อมูลบริการสำเร็จ");
+          closeServiceModal();
+          loadAdminServices();
+        } else {
+          alert("เกิดข้อผิดพลาด: " + data.error);
+        }
+      } catch (e) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      }
+    }
+
+    async function deleteServiceClick(serviceId) {
+      if (!confirm(`⚠️ ต้องการลบบริการรหัส ${serviceId} ออกจาก Google Sheet ใช่หรือไม่?`)) return;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "delete_service",
+            service_id: serviceId
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ลบบริการเรียบร้อยแล้ว");
+          loadAdminServices();
+        } else {
+          alert("ไม่สามารถลบได้: " + (data.error || ""));
+        }
+      } catch (e) {
+        alert("ไม่สามารถเชื่อมต่อได้");
+      }
+    }
+
+    // ==========================================
+    // 6.5 Tab: Monthly Doctor Duty Roster Logic (ตารางเวรหมอรายเดือน)
+    // ==========================================
+    let currentRosterMonth = "";
+    let cachedRosterMap = {}; // { "2026-10-01": ["DOC-001", "DOC-002"], ... }
+    let rosterDoctorsList = [];
+
+    const THAI_MONTH_NAMES_FULL = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+
+    function formatRosterMonthTh(monthStr) {
+      if (!monthStr) return "";
+      const [y, m] = monthStr.split("-").map(Number);
+      return `${THAI_MONTH_NAMES_FULL[m - 1]} ${y + 543}`;
+    }
+
+    function initRosterMonth() {
+      if (!currentRosterMonth) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        currentRosterMonth = `${yyyy}-${mm}`;
+      }
+      const picker = document.getElementById("rosterMonthPicker");
+      if (picker) picker.value = currentRosterMonth;
+      const titleEl = document.getElementById("rosterMonthTitleTh");
+      if (titleEl) titleEl.textContent = formatRosterMonthTh(currentRosterMonth);
+    }
+
+    function onRosterMonthChange() {
+      const picker = document.getElementById("rosterMonthPicker");
+      if (picker && picker.value) {
+        currentRosterMonth = picker.value;
+        const titleEl = document.getElementById("rosterMonthTitleTh");
+        if (titleEl) titleEl.textContent = formatRosterMonthTh(currentRosterMonth);
+        loadMonthlyRoster();
+      }
+    }
+
+    function changeRosterMonthOffset(offset) {
+      if (!currentRosterMonth) initRosterMonth();
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const d = new Date(y, m - 1 + offset, 1);
+      const nextY = d.getFullYear();
+      const nextM = String(d.getMonth() + 1).padStart(2, '0');
+      currentRosterMonth = `${nextY}-${nextM}`;
+      const picker = document.getElementById("rosterMonthPicker");
+      if (picker) picker.value = currentRosterMonth;
+      const titleEl = document.getElementById("rosterMonthTitleTh");
+      if (titleEl) titleEl.textContent = formatRosterMonthTh(currentRosterMonth);
+      loadMonthlyRoster();
+    }
+
+    async function loadMonthlyRoster() {
+      initRosterMonth();
+      const container = document.getElementById("rosterTableContainer");
+      container.innerHTML = `<div style="text-align: center; padding: 50px; color: var(--text-muted);">กำลังโหลดตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)}...</div>`;
+
+      try {
+        if (cachedDoctors.length === 0) {
+          const resDocs = await fetch(`${CONFIG.API_URL}?action=admin_get_doctors`).then(r => r.json());
+          if (resDocs.success) cachedDoctors = resDocs.doctors || [];
+        }
+        rosterDoctorsList = cachedDoctors.filter(d => d.is_active);
+
+        const resRoster = await fetch(`${CONFIG.API_URL}?action=admin_get_roster&month=${currentRosterMonth}`).then(r => r.json());
+        if (resRoster.success) {
+          cachedRosterMap = resRoster.roster || {};
+        } else {
+          cachedRosterMap = {};
+        }
+
+        renderRosterMatrix();
+      } catch (err) {
+        container.innerHTML = `<div style="color: red; text-align: center; padding: 40px;">เกิดข้อผิดพลาดในการโหลดตารางเวร</div>`;
+      }
+    }
+
+    function renderRosterMatrix() {
+      const container = document.getElementById("rosterTableContainer");
+      if (rosterDoctorsList.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">ยังไม่มีหมอนวดที่เปิดรับงานในระบบ กรุณาเพิ่มหมอที่แท็บ "รายชื่อหมอนวด" ก่อนครับ</div>`;
+        return;
+      }
+
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const dates = [];
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dd = String(i).padStart(2, '0');
+        dates.push(`${currentRosterMonth}-${dd}`);
+      }
+
+      const dayNamesShort = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+      let html = `<table class="roster-table">`;
+
+      // 1. Header Row 1: Day numbers & names
+      html += `<thead><tr class="roster-sticky-header">`;
+      html += `<th class="roster-sticky-col" style="background: #f8fafc; z-index: 7;">หมอนวด (คลิกช่องเพื่อสลับเวร)</th>`;
+      dates.forEach(dStr => {
+        const dObj = new Date(dStr + "T00:00:00");
+        const dayNum = parseInt(dStr.slice(-2), 10);
+        const dayOfWeek = dObj.getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const weekendClass = isWeekend ? 'roster-weekend-col' : '';
+        const dayColor = isWeekend ? '#b91c1c' : '#475569';
+
+        html += `
+          <th class="roster-header-cell ${weekendClass}" onclick="openDailyRosterModal('${dStr}')" title="คลิกเพื่อจัดเวรวันที่ ${dStr}">
+            <div style="font-size: 14px; font-weight: 700; color: ${dayColor};">${dayNum}</div>
+            <div style="font-size: 10px; color: ${dayColor}; opacity: 0.85;">${dayNamesShort[dayOfWeek]}</div>
+          </th>
+        `;
+      });
+      html += `<th style="background: #f8fafc; min-width: 65px; font-size: 11px;">รวมเวร</th>`;
+      html += `</tr>`;
+
+      // 2. Header Row 2: Doctor count per day
+      html += `<tr style="background: #f1f5f9; font-size: 11px;">`;
+      html += `<th class="roster-sticky-col" style="background: #f1f5f9; color: var(--text-muted); font-size: 11px; z-index: 7;">รวมหมอเข้าเวร</th>`;
+      dates.forEach(dStr => {
+        const dObj = new Date(dStr + "T00:00:00");
+        const isWeekend = (dObj.getDay() === 0 || dObj.getDay() === 6);
+        const weekendClass = isWeekend ? 'roster-weekend-col' : '';
+        const onDutyCount = (cachedRosterMap[dStr] || []).length;
+        let badgeBg = '#dcfce7';
+        let badgeColor = '#15803d';
+        if (onDutyCount === 0) {
+          badgeBg = '#fee2e2';
+          badgeColor = '#b91c1c';
+        } else if (onDutyCount === 1) {
+          badgeBg = '#ffedd5';
+          badgeColor = '#c2410c';
+        }
+        html += `
+          <th class="${weekendClass}" style="padding: 4px 2px;" onclick="openDailyRosterModal('${dStr}')">
+            <span class="roster-count-badge" style="background: ${badgeBg}; color: ${badgeColor}; cursor: pointer;" title="คลิกเพื่อจัดเวร">
+              ${onDutyCount}
+            </span>
+          </th>
+        `;
+      });
+      html += `<th style="background: #f1f5f9;">-</th>`;
+      html += `</tr></thead>`;
+
+      // 3. Body Rows: Doctor rows
+      html += `<tbody>`;
+      rosterDoctorsList.forEach(doc => {
+        let docMonthDaysCount = 0;
+        html += `<tr>`;
+        html += `
+          <td class="roster-sticky-col">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>💆</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 700; color: var(--primary-dark); line-height: 1.2;">${doc.nickname || doc.name}</div>
+                <div style="font-size: 10px; color: var(--text-muted);">${doc.doctor_id}</div>
+              </div>
+            </div>
+          </td>
+        `;
+
+        dates.forEach(dStr => {
+          const dObj = new Date(dStr + "T00:00:00");
+          const isWeekend = (dObj.getDay() === 0 || dObj.getDay() === 6);
+          const weekendClass = isWeekend ? 'roster-weekend-col' : '';
+          const dayDutyDocs = cachedRosterMap[dStr] || [];
+          const isOnDuty = dayDutyDocs.includes(doc.doctor_id);
+
+          if (isOnDuty) docMonthDaysCount++;
+
+          if (isOnDuty) {
+            html += `
+              <td class="${weekendClass}">
+                <div class="roster-cell-duty" onclick="toggleDoctorDuty('${doc.doctor_id}', '${dStr}')" title="คลิกเพื่อปิดเวร">
+                  ✓
+                </div>
+              </td>
+            `;
+          } else {
+            html += `
+              <td class="${weekendClass}">
+                <div class="roster-cell-off" onclick="toggleDoctorDuty('${doc.doctor_id}', '${dStr}')" title="คลิกเพื่อให้อยู่เวร">
+                  -
+                </div>
+              </td>
+            `;
+          }
+        });
+
+        html += `
+          <td style="font-weight: 700; color: var(--primary); font-size: 12px; background: #fafafa;">
+            ${docMonthDaysCount} วัน
+          </td>
+        `;
+        html += `</tr>`;
+      });
+      html += `</tbody></table>`;
+
+      container.innerHTML = html;
+    }
+
+    function toggleDoctorDuty(doctorId, dateStr) {
+      if (!cachedRosterMap[dateStr]) {
+        cachedRosterMap[dateStr] = [];
+      }
+      const idx = cachedRosterMap[dateStr].indexOf(doctorId);
+      if (idx !== -1) {
+        cachedRosterMap[dateStr].splice(idx, 1);
+      } else {
+        cachedRosterMap[dateStr].push(doctorId);
+      }
+      renderRosterMatrix();
+    }
+
+    function quickFillRosterFromWeekly() {
+      if (!confirm(`⚡ ต้องการเติมตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)} อัตโนมัติตามวันประจำสัปดาห์ของหมอแต่ละคนใช่หรือไม่?`)) return;
+
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dd = String(i).padStart(2, '0');
+        const dateStr = `${currentRosterMonth}-${dd}`;
+        const dayOfWeek = new Date(dateStr + "T00:00:00").getDay();
+
+        const onDuty = rosterDoctorsList.filter(doc => {
+          return String(doc.work_days).split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+        }).map(doc => doc.doctor_id);
+
+        cachedRosterMap[dateStr] = onDuty;
+      }
+
+      renderRosterMatrix();
+      alert("⚡ เติมข้อมูลตามวันประจำสัปดาห์เรียบร้อยแล้ว! สามารถคลิกแก้ไขช่องที่ต้องการ แล้วกดปุ่ม '💾 บันทึกตารางเวรทั้งเดือน' ได้เลยครับ");
+    }
+
+    function setAllRosterState(state) {
+      const [y, m] = currentRosterMonth.split("-").map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const allDocIds = rosterDoctorsList.map(d => d.doctor_id);
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dd = String(i).padStart(2, '0');
+        const dateStr = `${currentRosterMonth}-${dd}`;
+        cachedRosterMap[dateStr] = state ? [...allDocIds] : [];
+      }
+
+      renderRosterMatrix();
+    }
+
+    async function saveCurrentMonthRoster() {
+      const btn = document.getElementById("btnSaveRoster");
+      const originalText = btn.innerHTML;
+      btn.innerHTML = "⏳ กำลังบันทึกตารางเวร...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "save_monthly_roster",
+            month: currentRosterMonth,
+            roster: cachedRosterMap
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`💾 บันทึกตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)} เรียบร้อยแล้ว!\nระบบได้อัปเดตลง Google Sheet และคิวจองแบบเรียลไทม์`);
+        } else {
+          alert("เกิดข้อผิดพลาดในการบันทึก: " + (data.error || ""));
+        }
+      } catch (err) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // Daily Roster Modal
+    function openDailyRosterModal(dateStr) {
+      document.getElementById("dailyRosterModalDate").value = dateStr;
+      document.getElementById("dailyRosterModalTitle").textContent = `🗓️ จัดเวรวันที่ ${formatThaiDateWithDay(dateStr)}`;
+
+      const currentOnDuty = cachedRosterMap[dateStr] || [];
+      const listEl = document.getElementById("dailyRosterDoctorsList");
+      listEl.innerHTML = "";
+
+      rosterDoctorsList.forEach(doc => {
+        const isChecked = currentOnDuty.includes(doc.doctor_id);
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "8px";
+        label.style.fontSize = "13px";
+        label.style.padding = "6px 8px";
+        label.style.background = isChecked ? "#dcfce7" : "#ffffff";
+        label.style.border = `1px solid ${isChecked ? '#86efac' : '#e2e8f0'}`;
+        label.style.borderRadius = "6px";
+        label.style.cursor = "pointer";
+
+        label.innerHTML = `
+          <input type="checkbox" name="dailyRosterDoc" value="${doc.doctor_id}" ${isChecked ? 'checked' : ''} onchange="this.parentElement.style.background = this.checked ? '#dcfce7' : '#ffffff'; this.parentElement.style.borderColor = this.checked ? '#86efac' : '#e2e8f0'; updateDailyModalCount();">
+          <div>
+            <b>${doc.nickname || doc.name}</b>
+            <span style="font-size: 11px; color: var(--text-muted); display: block;">${doc.doctor_id} (${doc.work_start_time || '10:00'}-${doc.work_end_time || '20:00'})</span>
+          </div>
+        `;
+        listEl.appendChild(label);
+      });
+
+      updateDailyModalCount();
+      document.getElementById("dailyRosterModal").style.display = "flex";
+    }
+
+    function updateDailyModalCount() {
+      const checkedCount = document.querySelectorAll('#dailyRosterDoctorsList input[name="dailyRosterDoc"]:checked').length;
+      document.getElementById("dailyRosterCountLabel").textContent = `เลือกอยู่เวร: ${checkedCount} จาก ${rosterDoctorsList.length} ท่าน`;
+    }
+
+    function setDailyModalAll(state) {
+      const checkboxes = document.querySelectorAll('#dailyRosterDoctorsList input[name="dailyRosterDoc"]');
+      checkboxes.forEach(cb => {
+        cb.checked = state;
+        cb.parentElement.style.background = state ? "#dcfce7" : "#ffffff";
+        cb.parentElement.style.borderColor = state ? "#86efac" : "#e2e8f0";
+      });
+      updateDailyModalCount();
+    }
+
+    function applyDailyRosterModal() {
+      const dateStr = document.getElementById("dailyRosterModalDate").value;
+      const checkedIds = Array.from(document.querySelectorAll('#dailyRosterDoctorsList input[name="dailyRosterDoc"]:checked'))
+        .map(cb => cb.value);
+
+      cachedRosterMap[dateStr] = checkedIds;
+      closeDailyRosterModal();
+      renderRosterMatrix();
+    }
+
+    function closeDailyRosterModal() {
+      document.getElementById("dailyRosterModal").style.display = "none";
+    }
+
+    // ==========================================
+    // 7. Tab 5: Doctors Management (Add / Edit / Delete / Toggle)
+    // ==========================================
+    let cachedDoctors = [];
+
+    const DAY_NAMES_TH = [
+      { num: 0, label: "อา", bg: "#fee2e2", color: "#b91c1c" },
+      { num: 1, label: "จ", bg: "#fef9c3", color: "#a16207" },
+      { num: 2, label: "อ", bg: "#fce7f3", color: "#be185d" },
+      { num: 3, label: "พ", bg: "#dcfce7", color: "#15803d" },
+      { num: 4, label: "พฤ", bg: "#ffedd5", color: "#c2410c" },
+      { num: 5, label: "ศ", bg: "#dbeafe", color: "#1d4ed8" },
+      { num: 6, label: "ส", bg: "#f3e8ff", color: "#7e22ce" }
+    ];
+
+    function formatWorkDaysBadges(workDaysStr) {
+      if (!workDaysStr) return '<span style="color: var(--text-muted); font-size: 11px;">ไม่ระบุ</span>';
+      const days = String(workDaysStr).split(",").map(s => parseInt(String(s).trim(), 10)).filter(n => !isNaN(n));
+      if (days.length === 7) return '<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">ทุกวัน</span>';
+      
+      return days.map(d => {
+        const item = DAY_NAMES_TH.find(x => x.num === d);
+        if (!item) return "";
+        return `<span style="background: ${item.bg}; color: ${item.color}; padding: 2px 5px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 2px;">${item.label}</span>`;
+      }).join("");
+    }
+
+    function formatSkillsBadges(skillsStr) {
+      if (!skillsStr) return '<span style="color: var(--text-muted); font-size: 11px;">-</span>';
+      const skills = String(skillsStr).split(",").map(s => String(s).trim()).filter(Boolean);
+      return skills.map(sid => {
+        const srv = cachedServices.find(s => s.service_id === sid);
+        const label = srv ? srv.name : sid;
+        return `<span style="display: inline-block; background: #f1f5f9; color: var(--primary-dark); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin: 1px 2px; border: 1px solid #cbd5e1;" title="${sid}">${label}</span>`;
+      }).join("");
+    }
+
+    async function loadAdminDoctors() {
+      const tbody = document.getElementById("doctorsTableBody");
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายชื่อหมอ...</td></tr>`;
+
+      try {
+        if (cachedServices.length === 0) {
+          try {
+            const resSrv = await fetch(`${CONFIG.API_URL}?action=admin_get_services`);
+            const srvData = await resSrv.json();
+            if (srvData.success) cachedServices = srvData.services || [];
+          } catch (e) {}
+        }
+
+        const res = await fetch(`${CONFIG.API_URL}?action=admin_get_doctors`);
+        const data = await res.json();
+
+        if (data.success) {
+          cachedDoctors = data.doctors || [];
+          tbody.innerHTML = "";
+
+          if (cachedDoctors.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">ยังไม่มีข้อมูลหมอนวดในระบบ กดปุ่ม "➕ เพิ่มหมอนวดใหม่" ด้านบนเพื่อเริ่มเพิ่มหมอ</td></tr>`;
+            return;
+          }
+
+          cachedDoctors.forEach(d => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><b>${d.doctor_id}</b></td>
+              <td>💆 <b>${d.name}</b></td>
+              <td><span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${d.nickname || '-'}</span></td>
+              <td>📞 ${d.phone || '-'}</td>
+              <td>${formatWorkDaysBadges(d.work_days)}</td>
+              <td style="font-size: 12px; color: var(--text-muted);">⏱️ ${d.work_start_time || '10:00'} - ${d.work_end_time || '20:00'}</td>
+              <td style="max-width: 240px;">${formatSkillsBadges(d.skills)}</td>
+              <td>
+                <label class="switch">
+                  <input type="checkbox" ${d.is_active ? 'checked' : ''} onchange="toggleDoctor('${d.doctor_id}', this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;" onclick="editDoctor('${d.doctor_id}')">
+                    ✏️ แก้ไข
+                  </button>
+                  <button class="btn-delete-booking" style="padding: 6px 10px; font-size: 12px;" onclick="deleteDoctorClick('${d.doctor_id}')">
+                    🗑️ ลบ
+                  </button>
+                </div>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="9" style="color: red; text-align: center;">เกิดข้อผิดพลาดในการโหลดข้อมูลหมอ</td></tr>`;
+      }
+    }
+
+    async function renderDoctorSkillsCheckboxes(selectedSkillsArr = []) {
+      const container = document.getElementById("doctorSkillsCheckboxes");
+      if (cachedServices.length === 0) {
+        try {
+          const res = await fetch(`${CONFIG.API_URL}?action=admin_get_services`);
+          const data = await res.json();
+          if (data.success) cachedServices = data.services || [];
+        } catch (e) {}
+      }
+
+      if (cachedServices.length === 0) {
+        container.innerHTML = '<span style="font-size: 12px; color: var(--text-muted);">ไม่พบรายการบริการ</span>';
+        return;
+      }
+
+      container.innerHTML = "";
+      cachedServices.forEach(s => {
+        const isChecked = selectedSkillsArr.includes(s.service_id);
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "6px";
+        label.style.fontSize = "13px";
+        label.style.cursor = "pointer";
+        label.innerHTML = `
+          <input type="checkbox" name="doctorSkill" value="${s.service_id}" ${isChecked ? 'checked' : ''}>
+          <span>${s.name} <small style="color: var(--text-muted);">(${s.service_id})</small></span>
+        `;
+        container.appendChild(label);
+      });
+    }
+
+    function selectAllDoctorDays(state) {
+      const checkboxes = document.querySelectorAll('#doctorWorkDaysCheckboxes input[name="workDay"]');
+      checkboxes.forEach(cb => cb.checked = state);
+    }
+
+    async function openAddDoctorModal() {
+      document.getElementById("doctorModalTitle").textContent = "➕ เพิ่มหมอนวดใหม่";
+      document.getElementById("modalDoctorId").value = "";
+      document.getElementById("modalDoctorName").value = "";
+      document.getElementById("modalDoctorNickname").value = "";
+      document.getElementById("modalDoctorPhone").value = "";
+      document.getElementById("modalDoctorStartTime").value = "10:00";
+      document.getElementById("modalDoctorEndTime").value = "20:00";
+
+      selectAllDoctorDays(true); // Default ทำงานทุกวัน
+      await renderDoctorSkillsCheckboxes(cachedServices.map(s => s.service_id)); // Default ทำได้ทุกบริการ
+
+      document.getElementById("doctorModal").style.display = "flex";
+    }
+
+    async function editDoctor(doctorId) {
+      const doc = cachedDoctors.find(d => d.doctor_id === doctorId);
+      if (!doc) return;
+
+      document.getElementById("doctorModalTitle").textContent = "✏️ แก้ไขข้อมูลหมอนวด " + doc.doctor_id;
+      document.getElementById("modalDoctorId").value = doc.doctor_id;
+      document.getElementById("modalDoctorName").value = doc.name;
+      document.getElementById("modalDoctorNickname").value = doc.nickname || "";
+      document.getElementById("modalDoctorPhone").value = doc.phone || "";
+      document.getElementById("modalDoctorStartTime").value = doc.work_start_time || "10:00";
+      document.getElementById("modalDoctorEndTime").value = doc.work_end_time || "20:00";
+
+      // Set work days checkboxes
+      const workDaysArr = String(doc.work_days).split(",").map(s => String(s).trim());
+      const dayCheckboxes = document.querySelectorAll('#doctorWorkDaysCheckboxes input[name="workDay"]');
+      dayCheckboxes.forEach(cb => {
+        cb.checked = workDaysArr.includes(cb.value);
+      });
+
+      // Set skills checkboxes
+      const skillsArr = String(doc.skills).split(",").map(s => String(s).trim());
+      await renderDoctorSkillsCheckboxes(skillsArr);
+
+      document.getElementById("doctorModal").style.display = "flex";
+    }
+
+    function closeDoctorModal() {
+      document.getElementById("doctorModal").style.display = "none";
+    }
+
+    async function submitSaveDoctor() {
+      const doctorId = document.getElementById("modalDoctorId").value;
+      const name = document.getElementById("modalDoctorName").value.trim();
+      const nickname = document.getElementById("modalDoctorNickname").value.trim();
+      const phone = document.getElementById("modalDoctorPhone").value.trim();
+      const startTime = document.getElementById("modalDoctorStartTime").value || "10:00";
+      const endTime = document.getElementById("modalDoctorEndTime").value || "20:00";
+
+      if (!name) { alert("กรุณากรอกชื่อ-นามสกุลของหมอนวด"); return; }
+      if (!nickname) { alert("กรุณากรอกชื่อเล่น/ชื่อเรียกของหมอ"); return; }
+
+      // Get selected work days
+      const checkedDays = Array.from(document.querySelectorAll('#doctorWorkDaysCheckboxes input[name="workDay"]:checked'))
+        .map(cb => cb.value);
+      if (checkedDays.length === 0) {
+        alert("กรุณาเลือกตารางวันเข้าเวรอย่างน้อย 1 วัน");
+        return;
+      }
+      const workDaysStr = checkedDays.join(",");
+
+      // Get selected skills
+      const checkedSkills = Array.from(document.querySelectorAll('#doctorSkillsCheckboxes input[name="doctorSkill"]:checked'))
+        .map(cb => cb.value);
+      if (checkedSkills.length === 0) {
+        alert("กรุณาเลือกทักษะบริการที่หมอสามารถทำได้อย่างน้อย 1 รายการ");
+        return;
+      }
+      const skillsStr = checkedSkills.join(",");
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "save_doctor",
+            doctor_id: doctorId,
+            name: name,
+            nickname: nickname,
+            phone: phone,
+            work_days: workDaysStr,
+            work_start_time: startTime,
+            work_end_time: endTime,
+            skills: skillsStr
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("บันทึกข้อมูลหมอนวดสำเร็จ");
+          closeDoctorModal();
+          loadAdminDoctors();
+        } else {
+          alert("เกิดข้อผิดพลาด: " + data.error);
+        }
+      } catch (e) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      }
+    }
+
+    async function deleteDoctorClick(doctorId) {
+      if (!confirm(`⚠️ ต้องการลบข้อมูลหมอนวดรหัส ${doctorId} ออกจาก Google Sheet ใช่หรือไม่?`)) return;
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "delete_doctor",
+            doctor_id: doctorId
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ลบข้อมูลหมอนวดเรียบร้อยแล้ว");
+          loadAdminDoctors();
+        } else {
+          alert("ไม่สามารถลบได้: " + (data.error || ""));
+        }
+      } catch (e) {
+        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      }
+    }
+
+    async function toggleDoctor(doctorId, isActive) {
+      try {
+        await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "toggle_doctor_active",
+            doctor_id: doctorId,
+            is_active: isActive
+          })
+        });
+      } catch (e) {
+        alert("ไม่สามารถเปลี่ยนสถานะหมอได้");
+      }
+    }
+
+    // ==========================================
+    // 8. Walk-in / Phone-in Modal Logic
+    // ==========================================
+    async function openWalkinModal() {
+      document.getElementById("walkinCustName").value = "";
+      document.getElementById("walkinCustPhone").value = "";
+      document.getElementById("walkinCustIdCard").value = "";
+      document.getElementById("walkinNotes").value = "";
+      document.getElementById("walkinModal").style.display = "flex";
+
+      // Load services & doctors options if needed
+      try {
+        const [resSrv, resDoc] = await Promise.all([
+          fetch(`${CONFIG.API_URL}?action=admin_get_services`).then(r => r.json()),
+          fetch(`${CONFIG.API_URL}?action=admin_get_doctors`).then(r => r.json())
+        ]);
+        if (resSrv.success) {
+          const srvSelect = document.getElementById("walkinServiceSelect");
+          srvSelect.innerHTML = "";
+          resSrv.services.filter(s => s.is_active).forEach(s => {
+            srvSelect.innerHTML += `<option value="${s.service_id}">${s.name} (${s.price} ฿)</option>`;
+          });
+        }
+        if (resDoc.success) {
+          const docSelect = document.getElementById("walkinDoctorSelect");
+          docSelect.innerHTML = '<option value="ANY">ใครก็ได้ (ระบบจัดสรร)</option>';
+          resDoc.doctors.filter(d => d.is_active).forEach(d => {
+            docSelect.innerHTML += `<option value="${d.doctor_id}">${d.nickname || d.name}</option>`;
+          });
+        }
+      } catch (e) {}
+    }
+
+    function closeWalkinModal() {
+      document.getElementById("walkinModal").style.display = "none";
+    }
+
+    async function submitWalkinBooking() {
+      const name = document.getElementById("walkinCustName").value.trim();
+      const phone = document.getElementById("walkinCustPhone").value.trim();
+      const idCard = document.getElementById("walkinCustIdCard").value.trim();
+      const date = document.getElementById("walkinDate").value;
+      const startTime = document.getElementById("walkinTimeSlot").value;
+      const serviceId = document.getElementById("walkinServiceSelect").value;
+      const doctorId = document.getElementById("walkinDoctorSelect").value;
+      const notes = document.getElementById("walkinNotes").value.trim();
+
+      if (!name) { alert("กรุณากรอกชื่อลูกค้า"); return; }
+      if (!phone) { alert("กรุณากรอกเบอร์โทร"); return; }
+      if (!serviceId) { alert("กรุณาเลือกบริการ"); return; }
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "admin_create_booking",
+            line_user_id: "WALKIN",
+            customer_name: name,
+            customer_phone: phone,
+            id_card: idCard,
+            booking_date: date,
+            start_time: startTime,
+            service_id: serviceId,
+            doctor_id: doctorId,
+            notes: notes || "Walk-in หน้าร้าน"
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("ออกคิวจองสำเร็จ: " + data.booking_id);
+          closeWalkinModal();
+          loadAdminDayView();
+        } else {
+          alert("ไม่สามารถจองได้: " + (data.error || ""));
+        }
+      } catch (e) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      }
+    }
+  </script>
+</body>
+</html>
