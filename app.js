@@ -173,17 +173,77 @@ function selectService(srv) {
 }
 
 // ==========================================================================
-// 5. การแสดงผล Step 2: เลือกหมอ (กรองเฉพาะหมอที่ทำบริการนี้ได้)
+// 5. การแสดงผล Step 2: เลือกวันที่ & หมอนวดที่เข้าเวรในวันนั้น
 // ==========================================================================
-function renderDoctors() {
+function formatThaiDateWithDay(dateStr) {
+  if (!dateStr) return "-";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  const dayNames = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+  const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+  const dayName = dayNames[dt.getDay()];
+  const thaiYear = y + 543;
+  return `วัน${dayName}ที่ ${d} ${thaiMonths[m - 1]} ${thaiYear}`;
+}
+
+function onDateChanged() {
+  const dateVal = document.getElementById("bookingDateInput").value;
+  if (!dateVal) return;
+  bookingState.selectedDate = dateVal;
+  bookingState.selectedSlot = null;
+  renderDoctorsForSelectedDate();
+}
+
+function renderDoctorsForSelectedDate() {
   const grid = document.getElementById("doctorsGrid");
+  const dateDisplay = document.getElementById("dateDisplayLabel");
+  const badge = document.getElementById("onDutyCountBadge");
   grid.innerHTML = "";
 
-  const serviceId = bookingState.selectedService.service_id;
-  // กรองหมอที่ทำบริการนี้ได้
-  const qualifiedDocs = doctorsData.filter(d => String(d.skills).split(",").includes(serviceId));
+  if (dateDisplay) {
+    dateDisplay.textContent = `📅 ${formatThaiDateWithDay(bookingState.selectedDate)}`;
+  }
 
-  // การ์ดตัวเลือก "ใครก็ได้"
+  const serviceId = bookingState.selectedService ? bookingState.selectedService.service_id : "";
+  const [y, m, d] = bookingState.selectedDate.split("-").map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const dayOfWeek = dateObj.getDay();
+
+  // กรองหมอที่:
+  // 1. มีสถานะพร้อมทำงาน (is_active !== false)
+  // 2. มีทักษะบริการที่เลือก (skills includes serviceId)
+  // 3. เข้าเวรในวันประจำสัปดาห์นี้ (work_days includes dayOfWeek)
+  const qualifiedDocs = doctorsData.filter(doc => {
+    if (doc.is_active === false || String(doc.is_active).toUpperCase() === "FALSE") return false;
+    const worksOnDay = String(doc.work_days).split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+    const hasSkill = String(doc.skills).split(",").map(s => String(s).trim()).includes(serviceId);
+    return worksOnDay && hasSkill;
+  });
+
+  if (badge) {
+    badge.textContent = `เข้าเวร ${qualifiedDocs.length} ท่าน`;
+  }
+
+  // หากหมอเดิมที่เคยเลือกไว้ไม่ได้เข้าเวรในวันนี้ ให้ปรับเป็น ANY อัตโนมัติ
+  if (bookingState.selectedDoctor !== "ANY") {
+    const isStillOnDuty = qualifiedDocs.some(d => d.doctor_id === bookingState.selectedDoctor);
+    if (!isStillOnDuty) {
+      bookingState.selectedDoctor = "ANY";
+    }
+  }
+
+  if (qualifiedDocs.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1 / -1; background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 18px; border-radius: 8px; text-align: center; font-size: 13px; line-height: 1.6;">
+        ⚠️ <b>ไม่มีหมอนวดเข้าเวรสำหรับบริการนี้ในวันที่เลือก</b><br>
+        กรุณาเปลี่ยนวันที่นัดหมายด้านบน เพื่อดูหมอนวดในวันอื่นครับ
+      </div>
+    `;
+    document.getElementById("btnNext").disabled = true;
+    return;
+  }
+
+  // 1. การ์ดตัวเลือก "ใครก็ได้"
   const anyCard = document.createElement("div");
   anyCard.className = `doctor-card ${bookingState.selectedDoctor === 'ANY' ? 'selected' : ''}`;
   anyCard.onclick = () => selectDoctor('ANY');
@@ -194,7 +254,7 @@ function renderDoctors() {
   `;
   grid.appendChild(anyCard);
 
-  // การ์ดหมอแต่ละท่าน
+  // 2. การ์ดหมอแต่ละท่านที่เข้าเวรในวันนี้
   qualifiedDocs.forEach(doc => {
     const card = document.createElement("div");
     card.className = `doctor-card ${bookingState.selectedDoctor === doc.doctor_id ? 'selected' : ''}`;
@@ -202,7 +262,7 @@ function renderDoctors() {
     card.innerHTML = `
       <div class="doctor-avatar-circle">💆</div>
       <div class="doctor-name-display">${doc.nickname || doc.name}</div>
-      <div class="doctor-subtext">ผู้เชี่ยวชาญ</div>
+      <div class="doctor-subtext">เข้าเวร ${doc.work_start_time || '10:00'} - ${doc.work_end_time || '20:00'}</div>
     `;
     grid.appendChild(card);
   });
@@ -212,27 +272,29 @@ function renderDoctors() {
 
 function selectDoctor(doctorId) {
   bookingState.selectedDoctor = doctorId;
-  renderDoctors();
+  renderDoctorsForSelectedDate();
 }
 
 // ==========================================================================
-// 6. การแสดงผล Step 3: วันและรอบเวลา (Time Slots)
+// 6. การแสดงผล Step 3: เลือกรอบเวลาว่าง (Time Slots)
 // ==========================================================================
-async function onDateChanged() {
-  const dateVal = document.getElementById("bookingDateInput").value;
-  bookingState.selectedDate = dateVal;
-  bookingState.selectedSlot = null;
-  document.getElementById("btnNext").disabled = true;
-
-  await loadAvailableSlots();
-}
-
 async function loadAvailableSlots() {
   const container = document.getElementById("slotsGrid");
+  const subtext = document.getElementById("slotStepSubtext");
+
+  let docName = "ใครก็ได้ (ระบบจัดหมอว่างให้)";
+  if (bookingState.selectedDoctor !== "ANY") {
+    const doc = doctorsData.find(d => d.doctor_id === bookingState.selectedDoctor);
+    if (doc) docName = doc.nickname || doc.name;
+  }
+
+  if (subtext) {
+    subtext.innerHTML = `📅 <b>วันที่:</b> ${formatThaiDateWithDay(bookingState.selectedDate)} &nbsp;|&nbsp; 💆‍♂️ <b>หมอนวด:</b> ${docName}`;
+  }
+
   container.innerHTML = `<div style="grid-column: span 3; text-align: center; padding: 20px; color: var(--text-muted);">กำลังตรวจสอบรอบเวลาว่าง...</div>`;
 
   if (!CONFIG.API_URL || CONFIG.API_URL.startsWith("ใส่_")) {
-    // Mock slots สำหรับการทดสอบในหน้าจอ
     renderMockSlots();
     return;
   }
@@ -246,7 +308,7 @@ async function loadAvailableSlots() {
       activeSlots = data.slots;
       renderSlots(activeSlots);
     } else {
-      container.innerHTML = `<div style="grid-column: span 3; text-align: center; padding: 24px; color: #c5221f;">ขออภัย ไม่มีรอบเวลาว่างในวันนี้ กรุณาเลือกวันอื่นครับ</div>`;
+      container.innerHTML = `<div style="grid-column: span 3; text-align: center; padding: 24px; color: #c5221f;">ขออภัย ไม่มีรอบเวลาว่างในวันนี้ กรุณากดย้อนกลับเพื่อเลือกวันอื่นครับ</div>`;
     }
   } catch (err) {
     console.error("Slots Error:", err);
@@ -256,13 +318,10 @@ async function loadAvailableSlots() {
 
 function renderMockSlots() {
   activeSlots = [
-    { start_time: "10:00", end_time: "11:00", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] },
-    { start_time: "11:30", end_time: "12:30", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] },
-    { start_time: "13:00", end_time: "14:00", available_doctors: [{ id: "DOC-002", name: "หมอบุญชู" }] },
-    { start_time: "14:30", end_time: "15:30", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] },
-    { start_time: "16:00", end_time: "17:00", available_doctors: [{ id: "DOC-003", name: "หมอดวง" }] },
-    { start_time: "17:30", end_time: "18:30", available_doctors: [{ id: "DOC-004", name: "หมอเสริฐ" }] },
-    { start_time: "19:00", end_time: "20:00", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] }
+    { start_time: "09:00", end_time: "10:15", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] },
+    { start_time: "10:30", end_time: "11:45", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }, { id: "DOC-002", name: "หมอบุญชู" }] },
+    { start_time: "13:00", end_time: "14:15", available_doctors: [{ id: "DOC-002", name: "หมอบุญชู" }] },
+    { start_time: "14:30", end_time: "15:45", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] }
   ];
   renderSlots(activeSlots);
 }
@@ -278,7 +337,7 @@ function renderSlots(slots) {
     item.onclick = () => selectSlot(slot);
 
     item.innerHTML = `
-      <div class="slot-time">${slot.start_time}</div>
+      <div class="slot-time">${slot.start_time} - ${slot.end_time || ''}</div>
       <div class="slot-doc-count">${slot.available_doctors.length} ท่านว่าง</div>
     `;
     container.appendChild(item);
@@ -326,10 +385,11 @@ function updateStepUI() {
 function nextStep() {
   if (currentStep === 1) {
     currentStep = 2;
-    renderDoctors();
+    renderDoctorsForSelectedDate();
   } else if (currentStep === 2) {
     currentStep = 3;
-    onDateChanged();
+    bookingState.selectedSlot = null;
+    loadAvailableSlots();
   } else if (currentStep === 3) {
     currentStep = 4;
     renderSummary();
@@ -361,11 +421,10 @@ function renderSummary() {
     if (doc) docText = doc.nickname || doc.name;
   }
   document.getElementById("summaryDoctor").textContent = docText;
-  document.getElementById("summaryDate").textContent = formatDateThai(bookingState.selectedDate);
-  document.getElementById("summaryTime").textContent = `${slot.start_time} - ${slot.end_time} น.`;
+  document.getElementById("summaryDate").textContent = formatThaiDateWithDay(bookingState.selectedDate);
+  document.getElementById("summaryTime").textContent = `${slot.start_time} - ${slot.end_time || ''} น.`;
   document.getElementById("summaryPrice").textContent = `${Number(srv.price).toLocaleString()} บาท`;
 
-  // ใส่ชื่อเริ่มต้นจากโปรไฟล์ LINE ถ้ายังไม่ได้กรอก
   if (!document.getElementById("custNameInput").value && lineProfile.displayName) {
     document.getElementById("custNameInput").value = lineProfile.displayName;
   }
