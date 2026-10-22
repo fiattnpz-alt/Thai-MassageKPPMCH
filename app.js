@@ -25,6 +25,7 @@ let servicesData = [];
 let doctorsData = [];
 let activeSlots = [];
 let monthlyRosterCache = {};
+let doctorLeavesData = [];
 
 // ==========================================================================
 // 1. เริ่มต้นระบบเมื่อเปิดหน้าเว็บ
@@ -121,6 +122,18 @@ async function loadInitialData() {
         }
       } catch (e) {}
 
+      // ดึงข้อมูลวันลาของหมอนวดจาก Server และ LocalStorage
+      if (data.leaves && Array.isArray(data.leaves)) {
+        doctorLeavesData = data.leaves;
+        try {
+          localStorage.setItem("CLINIC_DOCTOR_LEAVES", JSON.stringify(data.leaves));
+        } catch (e) {}
+      } else {
+        try {
+          doctorLeavesData = JSON.parse(localStorage.getItem("CLINIC_DOCTOR_LEAVES") || "[]");
+        } catch (e) {}
+      }
+
       if (data.settings && data.settings.shop_name) {
         document.getElementById("shopTitle").textContent = data.settings.shop_name;
       }
@@ -207,30 +220,48 @@ async function onDateChanged() {
 
   const monthStr = dateVal.slice(0, 7);
 
-  // 1. ตรวจสอบตารางเวรจาก LocalStorage ก่อนเป็นอันดับแรกเพื่อ Sync กับแอดมินทันที
+  // 1. ตรวจสอบตารางเวร และ วันลา จาก LocalStorage ก่อนเป็นอันดับแรกเพื่อ Sync กับแอดมินทันที
   try {
-    const stored = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
-    if (stored[monthStr]) {
-      Object.assign(monthlyRosterCache, stored[monthStr]);
+    const storedRosters = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
+    if (storedRosters[monthStr]) {
+      Object.assign(monthlyRosterCache, storedRosters[monthStr]);
+    }
+    const storedLeaves = JSON.parse(localStorage.getItem("CLINIC_DOCTOR_LEAVES") || "[]");
+    if (storedLeaves && storedLeaves.length > 0) {
+      doctorLeavesData = storedLeaves;
     }
   } catch (e) {}
 
-  // 2. ถ้าในแคชยังไม่มีเดือนนี้ และมี API_URL ให้โหลดตารางเวรเดือนนี้
+  // 2. ถ้าในแคชยังไม่มีเดือนนี้ หรือต้องการอัปเดตวันลาล่าสุดจาก API
   let isMonthCached = false;
   for (const k in monthlyRosterCache) {
     if (k.startsWith(monthStr)) { isMonthCached = true; break; }
   }
 
-  if (!isMonthCached && CONFIG.API_URL && !CONFIG.API_URL.startsWith("ใส่_")) {
+  if (CONFIG.API_URL && !CONFIG.API_URL.startsWith("ใส่_")) {
     try {
-      const res = await fetch(`${CONFIG.API_URL}?action=get_monthly_roster&month=${monthStr}`);
-      const data = await res.json();
-      if (data.success && data.roster) {
-        Object.assign(monthlyRosterCache, data.roster);
+      const promises = [];
+      if (!isMonthCached) {
+        promises.push(fetch(`${CONFIG.API_URL}?action=get_monthly_roster&month=${monthStr}`).then(r => r.json()));
+      }
+      // โหลดวันลาล่าสุดเพื่อความแม่นยำ
+      promises.push(fetch(`${CONFIG.API_URL}?action=get_leaves`).then(r => r.json()).catch(() => null));
+
+      const [resRoster, resLeaves] = await Promise.all(promises);
+
+      if (resRoster && resRoster.success && resRoster.roster) {
+        Object.assign(monthlyRosterCache, resRoster.roster);
         try {
           const stored = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
-          stored[monthStr] = data.roster;
+          stored[monthStr] = resRoster.roster;
           localStorage.setItem("CLINIC_MONTHLY_ROSTERS", JSON.stringify(stored));
+        } catch (e) {}
+      }
+
+      if (resLeaves && resLeaves.success && resLeaves.leaves) {
+        doctorLeavesData = resLeaves.leaves;
+        try {
+          localStorage.setItem("CLINIC_DOCTOR_LEAVES", JSON.stringify(resLeaves.leaves));
         } catch (e) {}
       }
     } catch (e) {}
@@ -269,7 +300,7 @@ function renderDoctorsForSelectedDate() {
   // คัดกรองหมอที่เปิดใช้งาน
   const activeDocs = doctorsData.filter(doc => doc.is_active !== false && String(doc.is_active).toUpperCase() !== "FALSE");
 
-  // แยกกลุ่มหมอ: เข้าเวร vs ไม่เข้าเวร
+  // แยกกลุ่มหมอ: เข้าเวร vs ไม่เข้าเวร (รวมถึงติดวันลา)
   const onDutyDocs = [];
   const offDutyDocs = [];
 
@@ -285,10 +316,30 @@ function renderDoctorsForSelectedDate() {
 
     const hasSkill = !serviceId || String(doc.skills || "").split(",").map(s => String(s).trim()).includes(serviceId);
 
-    if (worksOnDay && hasSkill) {
+    // ตรวจสอบวันลาของหมอในวันนี้
+    const leaveRecord = doctorLeavesData.find(l => {
+      const lDate = String(l.leave_date || "").slice(0, 10);
+      return l.doctor_id === doc.doctor_id && lDate === bookingState.selectedDate;
+    });
+
+    if (leaveRecord) {
+      // หมอลางานในวันที่เลือก -> ปิดรับนัดเด็ดขาด
+      offDutyDocs.push({
+        doc,
+        worksOnDay: false,
+        hasSkill,
+        isOnLeave: true,
+        leaveReason: leaveRecord.reason || "ลางาน"
+      });
+    } else if (worksOnDay && hasSkill) {
       onDutyDocs.push(doc);
     } else {
-      offDutyDocs.push({ doc, worksOnDay, hasSkill });
+      offDutyDocs.push({
+        doc,
+        worksOnDay,
+        hasSkill,
+        isOnLeave: false
+      });
     }
   });
 
@@ -296,16 +347,18 @@ function renderDoctorsForSelectedDate() {
     badge.textContent = `เข้าเวร ${onDutyDocs.length} ท่าน`;
   }
 
-  // หากหมอเดิมที่เคยเลือกไว้ ไม่ได้เข้าเวรในวันนี้ ให้ปรับเป็น ANY อัตโนมัติ พร้อมแจ้งเตือน
+  // หากหมอเดิมที่เคยเลือกไว้ ไม่ได้เข้าเวร หรือลางานในวันนี้ ให้ปรับเป็น ANY อัตโนมัติ พร้อมแจ้งเตือน
   if (bookingState.selectedDoctor !== "ANY") {
     const isStillOnDuty = onDutyDocs.some(d => d.doctor_id === bookingState.selectedDoctor);
     if (!isStillOnDuty) {
       const prevDoc = activeDocs.find(d => d.doctor_id === bookingState.selectedDoctor);
       const prevDocName = prevDoc ? (prevDoc.nickname || prevDoc.name) : "หมอที่เลือกไว้";
+      const leaveRecord = doctorLeavesData.find(l => String(l.leave_date || "").slice(0, 10) === bookingState.selectedDate && l.doctor_id === bookingState.selectedDoctor);
+
       bookingState.selectedDoctor = "ANY";
       const noticeBox = document.createElement("div");
       noticeBox.style.cssText = "grid-column: 1 / -1; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 8px;";
-      noticeBox.innerHTML = `ℹ️ <b>${prevDocName}</b> ไม่ได้เข้าเวรในวันที่คุณเลือก ระบบจึงปรับเป็น <b>"ใครก็ได้"</b> ให้อัตโนมัติครับ`;
+      noticeBox.innerHTML = `ℹ️ <b>${prevDocName}</b> ${leaveRecord ? `ลางานในวันที่คุณเลือก (${leaveRecord.reason || 'ลางาน'})` : 'ไม่ได้เข้าเวรในวันที่คุณเลือก'} ระบบจึงปรับเป็น <b>"ใครก็ได้"</b> ให้อัตโนมัติครับ`;
       grid.appendChild(noticeBox);
     }
   }
@@ -350,7 +403,7 @@ function renderDoctorsForSelectedDate() {
     grid.appendChild(card);
   });
 
-  // 3. การ์ดหมอที่ "ไม่เข้าเวรในวันนี้" (เช่น หมอมด วันที่ไม่ได้ติ๊กเวร) -> ปิดการเลือก แสดงชัดเจนคนไข้จะได้ไม่งง
+  // 3. การ์ดหมอที่ "ไม่เข้าเวร หรือลางานในวันนี้" (เช่น หมอนัย วันที่ลงวันลาไว้) -> ปิดการเลือก แสดงชัดเจนคนไข้จะได้ไม่งง
   if (offDutyDocs.length > 0) {
     renderOffDutyCards(grid, offDutyDocs);
   }
@@ -361,29 +414,35 @@ function renderDoctorsForSelectedDate() {
 function renderOffDutyCards(container, offDutyDocs) {
   const divider = document.createElement("div");
   divider.style.cssText = "grid-column: 1 / -1; margin-top: 14px; margin-bottom: 4px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;";
-  divider.innerHTML = `<span>หมอนวดที่ไม่เข้าเวรในวันนี้:</span> <span style="font-size: 11px; font-weight: normal; color: #94a3b8;">(เลือกไม่ได้)</span>`;
+  divider.innerHTML = `<span>หมอนวดที่ไม่พร้อมให้บริการในวันนี้:</span> <span style="font-size: 11px; font-weight: normal; color: #94a3b8;">(เลือกไม่ได้)</span>`;
   container.appendChild(divider);
 
-  offDutyDocs.forEach(({ doc, worksOnDay, hasSkill }) => {
+  offDutyDocs.forEach(({ doc, worksOnDay, hasSkill, isOnLeave, leaveReason }) => {
     const card = document.createElement("div");
     card.className = "doctor-card disabled";
     
     let reasonText = "⛔ ไม่เข้าเวรวันนี้";
     let badgeClass = "off";
-    if (!worksOnDay) {
+    let alertMsg = "";
+
+    if (isOnLeave) {
+      reasonText = `🏖️ ลางาน (${leaveReason || 'ลางาน'})`;
+      badgeClass = "off";
+      alertMsg = `⚠️ ขออภัยครับ หมอ${doc.nickname || doc.name} ลางานในวันที่ ${formatThaiDateWithDay(bookingState.selectedDate)} (${leaveReason || 'ลางาน'})\nกรุณาเลือกหมอท่านอื่นที่เข้าเวร หรือเปลี่ยนวันนัดหมายครับ`;
+    } else if (!worksOnDay) {
       reasonText = "⛔ ไม่เข้าเวรวันนี้ (เลือกไม่ได้)";
       badgeClass = "off";
+      alertMsg = `⚠️ ขออภัยครับ หมอ${doc.nickname || doc.name} ไม่ได้เข้าเวรในวันที่ ${formatThaiDateWithDay(bookingState.selectedDate)}\nกรุณาเลือกหมอท่านอื่นที่เข้าเวร หรือเปลี่ยนวันนัดหมายครับ`;
     } else if (!hasSkill) {
       reasonText = "⚠️ ไม่ได้รับบริการนี้";
       badgeClass = "noskill";
+      alertMsg = `⚠️ ขออภัยครับ หมอ${doc.nickname || doc.name} ไม่ได้รับบริการนี้ครับ`;
     }
 
-    card.onclick = () => {
-      alert(`⚠️ ขออภัยครับ หมอ${doc.nickname || doc.name} ${reasonText}\nในวันที่ ${formatThaiDateWithDay(bookingState.selectedDate)}\nกรุณาเลือกหมอท่านอื่นที่เข้าเวร หรือเปลี่ยนวันนัดหมายครับ`);
-    };
+    card.onclick = () => alert(alertMsg);
 
     card.innerHTML = `
-      <div class="doctor-avatar-circle" style="background: #e2e8f0; color: #94a3b8;">💆</div>
+      <div class="doctor-avatar-circle" style="background: #e2e8f0; color: #94a3b8;">${isOnLeave ? '🏖️' : '💆'}</div>
       <div class="doctor-name-display" style="color: #64748b;">${doc.nickname || doc.name}</div>
       <div class="doctor-subtext">${reasonText}</div>
       <span class="doctor-duty-badge ${badgeClass}">${reasonText}</span>
@@ -397,6 +456,17 @@ function selectDoctor(doctorId) {
     const doc = doctorsData.find(d => d.doctor_id === doctorId);
     if (!doc) return;
 
+    // 1. ตรวจสอบวันลา
+    const leaveRecord = doctorLeavesData.find(l => {
+      const lDate = String(l.leave_date || "").slice(0, 10);
+      return l.doctor_id === doc.doctor_id && lDate === bookingState.selectedDate;
+    });
+    if (leaveRecord) {
+      alert(`⚠️ ขออภัยครับ หมอ${doc.nickname || doc.name} ลางานในวันที่ ${formatThaiDateWithDay(bookingState.selectedDate)} (${leaveRecord.reason || 'ลางาน'}) จึงไม่สามารถเลือกลงนัดได้ครับ`);
+      return;
+    }
+
+    // 2. ตรวจสอบตารางเวร
     const monthStr = bookingState.selectedDate.slice(0, 7);
     let isMonthScheduled = false;
     for (const k in monthlyRosterCache) {
