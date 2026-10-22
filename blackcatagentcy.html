@@ -1529,6 +1529,7 @@
     let currentRosterMonth = "";
     let cachedRosterMap = {}; // { "2026-10-01": ["DOC-001", "DOC-002"], ... }
     let rosterDoctorsList = [];
+    let cachedDoctors = [];
 
     const THAI_MONTH_NAMES_FULL = [
       "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -1583,6 +1584,14 @@
       const container = document.getElementById("rosterTableContainer");
       container.innerHTML = `<div style="text-align: center; padding: 50px; color: var(--text-muted);">กำลังโหลดตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)}...</div>`;
 
+      // โหลดจาก LocalStorage ก่อนเป็นอันดับแรกเพื่อความรวดเร็ว
+      try {
+        const stored = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
+        if (stored[currentRosterMonth]) {
+          cachedRosterMap = Object.assign({}, stored[currentRosterMonth]);
+        }
+      } catch (e) {}
+
       try {
         if (cachedDoctors.length === 0) {
           const resDocs = await fetch(`${CONFIG.API_URL}?action=admin_get_doctors`).then(r => r.json());
@@ -1591,15 +1600,23 @@
         rosterDoctorsList = cachedDoctors.filter(d => d.is_active);
 
         const resRoster = await fetch(`${CONFIG.API_URL}?action=admin_get_roster&month=${currentRosterMonth}`).then(r => r.json());
-        if (resRoster.success) {
-          cachedRosterMap = resRoster.roster || {};
-        } else {
-          cachedRosterMap = {};
+        if (resRoster.success && resRoster.roster && Object.keys(resRoster.roster).length > 0) {
+          cachedRosterMap = resRoster.roster;
+          // บันทึกลง LocalStorage อัปเดตล่าสุด
+          try {
+            const stored = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
+            stored[currentRosterMonth] = cachedRosterMap;
+            localStorage.setItem("CLINIC_MONTHLY_ROSTERS", JSON.stringify(stored));
+          } catch (e) {}
         }
 
         renderRosterMatrix();
       } catch (err) {
-        container.innerHTML = `<div style="color: red; text-align: center; padding: 40px;">เกิดข้อผิดพลาดในการโหลดตารางเวร</div>`;
+        if (Object.keys(cachedRosterMap).length > 0) {
+          renderRosterMatrix();
+        } else {
+          container.innerHTML = `<div style="color: red; text-align: center; padding: 40px;">เกิดข้อผิดพลาดในการโหลดตารางเวร</div>`;
+        }
       }
     }
 
@@ -1783,6 +1800,13 @@
       btn.innerHTML = "⏳ กำลังบันทึกตารางเวร...";
       btn.disabled = true;
 
+      // 1. บันทึกลง LocalStorage ทันที เพื่อให้ระบบจองคิวคนไข้และแอดมิน sync ทันทีแบบเรียลไทม์
+      try {
+        const stored = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
+        stored[currentRosterMonth] = cachedRosterMap;
+        localStorage.setItem("CLINIC_MONTHLY_ROSTERS", JSON.stringify(stored));
+      } catch (e) {}
+
       try {
         const res = await fetch(CONFIG.API_URL, {
           method: "POST",
@@ -1796,14 +1820,38 @@
         if (data.success) {
           alert(`💾 บันทึกตารางเวรเดือน ${formatRosterMonthTh(currentRosterMonth)} เรียบร้อยแล้ว!\nระบบได้อัปเดตลง Google Sheet และคิวจองแบบเรียลไทม์`);
         } else {
-          alert("เกิดข้อผิดพลาดในการบันทึก: " + (data.error || ""));
+          alert("เกิดข้อผิดพลาดในการบันทึกลง Sheet: " + (data.error || "") + "\n(แต่ข้อมูลได้ถูกบันทึกลงเครื่องเรียบร้อยแล้ว)");
         }
       } catch (err) {
-        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+        alert("💾 บันทึกตารางเวรลงเครื่องเรียบร้อยแล้ว! (เชื่อมต่อ Google Sheet ไม่สำเร็จ แต่ระบบจองคิวจะใช้เวรล่าสุดนี้ทันที)");
       } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
       }
+    }
+
+    // ฟังก์ชันช่วยดึงรายชื่อหมอที่เข้าเวรในวันที่กำหนด
+    function getDutyDoctorIdsForDate(dateStr) {
+      if (!dateStr) return null;
+      const monthStr = dateStr.slice(0, 7);
+
+      // 1. ตรวจสอบใน cachedRosterMap ก่อน (ถ้ากำลังเปิดดูเดือนนั้นอยู่)
+      if (currentRosterMonth === monthStr && cachedRosterMap && Object.keys(cachedRosterMap).length > 0) {
+        if (cachedRosterMap.hasOwnProperty(dateStr)) {
+          return cachedRosterMap[dateStr] || [];
+        }
+        return []; // เดือนนี้จัดเวรแล้ว แต่วันนี้ไม่มีหมอ
+      }
+
+      // 2. ตรวจสอบใน LocalStorage
+      try {
+        const stored = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
+        if (stored[monthStr]) {
+          return stored[monthStr][dateStr] || [];
+        }
+      } catch (e) {}
+
+      return null; // ยังไม่เคยจัดเวรเดือนนี้
     }
 
     // Daily Roster Modal
@@ -1874,7 +1922,6 @@
     // ==========================================
     // 7. Tab 5: Doctors Management (Add / Edit / Delete / Toggle)
     // ==========================================
-    let cachedDoctors = [];
 
     const DAY_NAMES_TH = [
       { num: 0, label: "อา", bg: "#fee2e2", color: "#b91c1c" },
@@ -2153,14 +2200,26 @@
       document.getElementById("walkinCustPhone").value = "";
       document.getElementById("walkinCustIdCard").value = "";
       document.getElementById("walkinNotes").value = "";
+
+      const dateInput = document.getElementById("walkinDate");
+      if (!dateInput.value) {
+        dateInput.value = selectedAdminDate || new Date().toISOString().slice(0, 10);
+      }
+
       document.getElementById("walkinModal").style.display = "flex";
 
-      // Load services & doctors options if needed
+      // Hook change events เพื่ออัปเดตรายชื่อหมอตามเวรของวันที่เลือก
+      dateInput.onchange = updateWalkinDoctorsList;
+      document.getElementById("walkinServiceSelect").onchange = updateWalkinDoctorsList;
+
+      // โหลดบริการ & หมอนวด
       try {
-        const [resSrv, resDoc] = await Promise.all([
-          fetch(`${CONFIG.API_URL}?action=admin_get_services`).then(r => r.json()),
-          fetch(`${CONFIG.API_URL}?action=admin_get_doctors`).then(r => r.json())
-        ]);
+        if (cachedDoctors.length === 0) {
+          const resDoc = await fetch(`${CONFIG.API_URL}?action=admin_get_doctors`).then(r => r.json());
+          if (resDoc.success) cachedDoctors = resDoc.doctors || [];
+        }
+
+        const resSrv = await fetch(`${CONFIG.API_URL}?action=admin_get_services`).then(r => r.json());
         if (resSrv.success) {
           const srvSelect = document.getElementById("walkinServiceSelect");
           srvSelect.innerHTML = "";
@@ -2168,14 +2227,67 @@
             srvSelect.innerHTML += `<option value="${s.service_id}">${s.name} (${s.price} ฿)</option>`;
           });
         }
-        if (resDoc.success) {
-          const docSelect = document.getElementById("walkinDoctorSelect");
-          docSelect.innerHTML = '<option value="ANY">ใครก็ได้ (ระบบจัดสรร)</option>';
-          resDoc.doctors.filter(d => d.is_active).forEach(d => {
-            docSelect.innerHTML += `<option value="${d.doctor_id}">${d.nickname || d.name}</option>`;
-          });
+
+        updateWalkinDoctorsList();
+      } catch (e) {
+        updateWalkinDoctorsList();
+      }
+    }
+
+    // อัปเดต Dropdown หมอนวดใน Modal โดยอิงจากตารางเวรของวันที่เลือก
+    function updateWalkinDoctorsList() {
+      const dateVal = document.getElementById("walkinDate").value;
+      const serviceId = document.getElementById("walkinServiceSelect").value;
+      const docSelect = document.getElementById("walkinDoctorSelect");
+      const currentSelected = docSelect.value;
+
+      if (!dateVal) return;
+
+      const dutyDocIds = getDutyDoctorIdsForDate(dateVal);
+      const [y, m, d] = dateVal.split("-").map(Number);
+      const dayOfWeek = new Date(y, m - 1, d).getDay();
+
+      const activeDocs = cachedDoctors.filter(d => d.is_active);
+
+      docSelect.innerHTML = '<option value="ANY">✨ ใครก็ได้ (ระบบจัดสรรตามเวร)</option>';
+
+      activeDocs.forEach(doc => {
+        let isOnDuty = false;
+        if (dutyDocIds !== null) {
+          isOnDuty = dutyDocIds.includes(doc.doctor_id);
+        } else {
+          isOnDuty = String(doc.work_days || "").split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
         }
-      } catch (e) {}
+
+        const opt = document.createElement("option");
+        opt.value = doc.doctor_id;
+
+        if (isOnDuty) {
+          opt.textContent = `🟢 ${doc.nickname || doc.name} (เข้าเวร ${doc.work_start_time || '10:00'}-${doc.work_end_time || '20:00'})`;
+          if (currentSelected === doc.doctor_id) opt.selected = true;
+        } else {
+          opt.disabled = true;
+          opt.style.color = "#94a3b8";
+          opt.style.background = "#f1f5f9";
+          opt.textContent = `⛔ ${doc.nickname || doc.name} (ไม่เข้าเวรวันที่นี้ - เลือกไม่ได้)`;
+        }
+        docSelect.appendChild(opt);
+      });
+
+      // หากหมอที่เลือกไว้ก่อนหน้าไม่ได้เข้าเวรในวันนี้ ให้ปรับเป็น "ใครก็ได้" ทันที
+      if (currentSelected && currentSelected !== "ANY") {
+        let selectedStillOnDuty = false;
+        if (dutyDocIds !== null) {
+          selectedStillOnDuty = dutyDocIds.includes(currentSelected);
+        } else {
+          const dObj = activeDocs.find(d => d.doctor_id === currentSelected);
+          if (dObj) selectedStillOnDuty = String(dObj.work_days || "").split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+        }
+
+        if (!selectedStillOnDuty) {
+          docSelect.value = "ANY";
+        }
+      }
     }
 
     function closeWalkinModal() {
@@ -2195,6 +2307,26 @@
       if (!name) { alert("กรุณากรอกชื่อลูกค้า"); return; }
       if (!phone) { alert("กรุณากรอกเบอร์โทร"); return; }
       if (!serviceId) { alert("กรุณาเลือกบริการ"); return; }
+
+      // ตรวจสอบความถูกต้องว่าหมอเข้าเวรในวันนั้นจริงหรือไม่
+      if (doctorId && doctorId !== "ANY") {
+        const dutyDocIds = getDutyDoctorIdsForDate(date);
+        const [y, m, d] = date.split("-").map(Number);
+        const dayOfWeek = new Date(y, m - 1, d).getDay();
+        const doc = cachedDoctors.find(d => d.doctor_id === doctorId);
+
+        let isOnDuty = false;
+        if (dutyDocIds !== null) {
+          isOnDuty = dutyDocIds.includes(doctorId);
+        } else if (doc) {
+          isOnDuty = String(doc.work_days || "").split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+        }
+
+        if (!isOnDuty) {
+          alert(`⚠️ ไม่สามารถลงนัดได้ เนื่องจาก ${doc ? (doc.nickname || doc.name) : 'หมอท่านนี้'} ไม่ได้เข้าเวรในวันที่ ${date}\nกรุณาเลือกหมอท่านอื่นที่เข้าเวร หรือเลือก "ใครก็ได้" ครับ`);
+          return;
+        }
+      }
 
       try {
         const res = await fetch(CONFIG.API_URL, {
