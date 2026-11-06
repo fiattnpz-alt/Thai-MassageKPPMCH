@@ -2700,7 +2700,7 @@
 
         const data = await res.json();
         if (data.success) {
-          alert(✅ บันทึกล็อกคิวสำเร็จแล้วทั้งหมด  รอบ!\nคนไข้จองออนไลน์จะไม่สามารถจองชนรอบเหล่านี้ได้แล้วครับ);
+          alert("✅ บันทึกล็อกคิวสำเร็จแล้วทั้งหมด " + (data.count || slotsToBook.length) + " รอบ!\nคนไข้จองออนไลน์จะไม่สามารถจองชนรอบเหล่านี้ได้แล้วครับ");
           closePaperBookingModal();
           document.getElementById("adminDateInput").value = dateVal;
           loadAdminDayView();
@@ -2729,7 +2729,7 @@
           }
 
           if (successCount > 0) {
-            alert(✅ บันทึกล็อกคิวสำเร็จแล้ว  รอบ!\nคนไข้จองออนไลน์จะไม่สามารถจองชนรอบเหล่านี้ได้);
+            alert("✅ บันทึกล็อกคิวสำเร็จแล้ว " + successCount + " รอบ!\nคนไข้จองออนไลน์จะไม่สามารถจองชนรอบเหล่านี้ได้");
             closePaperBookingModal();
             document.getElementById("adminDateInput").value = dateVal;
             loadAdminDayView();
