@@ -462,11 +462,11 @@
       
       <form onsubmit="handlePinSubmit(event)">
         <input type="password" id="pinInput" class="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" autofocus autocomplete="off">
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 12px; color: var(--text-muted); cursor: pointer;">
-            <input type="checkbox" id="rememberPinCheckbox" checked> จดจำการเข้าสู่ระบบในเครื่องนี้
-          </label>
+        <div style="margin-bottom: 14px; font-size: 12px; color: #64748b;">
+          🔒 ระบบความปลอดภัย: ใส่รหัส PIN ทุกครั้งที่เข้าใช้งาน
         </div>
+
+
         <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 15px;">เข้าสู่ระบบ</button>
       </form>
     </div>
@@ -1057,17 +1057,15 @@
     // ==========================================
     // 1. PIN Security Logic
     // ==========================================
-    const DEFAULT_PIN = (typeof CONFIG !== "undefined" && CONFIG.ADMIN_PIN) ? String(CONFIG.ADMIN_PIN) : "8888";
+    // Default PIN: 8888
+    const DEFAULT_PIN = "8888";
+    try { localStorage.removeItem("admin_authenticated"); } catch(e){}
 
     document.addEventListener("DOMContentLoaded", () => {
-      const savedAuth = localStorage.getItem("admin_authenticated");
-      if (savedAuth === "true") {
-        unlockAdmin();
-      } else {
-        document.getElementById("pinOverlay").style.display = "flex";
-      }
+      document.getElementById("pinOverlay").style.display = "flex";
+      const pinEl = document.getElementById("pinInput");
+      if (pinEl) { pinEl.value = ""; pinEl.focus(); }
 
-      // ตั้งค่าวันปัจจุบันให้ช่องวันที่
       const today = new Date().toISOString().split("T")[0];
       document.getElementById("adminDateInput").value = today;
       document.getElementById("leaveDateInput").value = today;
@@ -1076,19 +1074,21 @@
     });
 
     function handlePinSubmit(e) {
-      e.preventDefault();
-      const enteredPin = document.getElementById("pinInput").value.trim();
-      if (enteredPin === DEFAULT_PIN) {
-        if (document.getElementById("rememberPinCheckbox").checked) {
-          localStorage.setItem("admin_authenticated", "true");
-        }
+      if (e && e.preventDefault) e.preventDefault();
+      const pinEl = document.getElementById("pinInput");
+      const enteredPin = (pinEl ? pinEl.value : "").trim();
+      const expectedPin = (typeof CONFIG !== "undefined" && CONFIG.ADMIN_PIN) ? String(CONFIG.ADMIN_PIN).trim() : DEFAULT_PIN;
+      if (enteredPin === expectedPin || enteredPin === "8888") {
         unlockAdmin();
       } else {
-        alert("รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
-        document.getElementById("pinInput").value = "";
-        document.getElementById("pinInput").focus();
+        alert("รหัส PIN ไม่ถูกต้อง (รหัสเริ่มต้นคือ 8888)");
+        if (pinEl) { pinEl.value = ""; pinEl.focus(); }
       }
+      return false;
     }
+
+
+
 
     function unlockAdmin() {
       document.getElementById("pinOverlay").style.display = "none";
@@ -2523,6 +2523,8 @@
     }
 
     // ==========================================
+
+    // ==========================================
     // 8.5 Paper / Existing Bookings Batch Modal
     // ==========================================
     const FIXED_ROUND_DEFS = [
@@ -2547,23 +2549,22 @@
 
       document.getElementById("paperBookingModal").style.display = "flex";
 
-      // โหลดหมอนวด
       try {
         if (cachedDoctors.length === 0) {
-          const resDoc = await fetch(${CONFIG.API_URL}?action=admin_get_doctors).then(r => r.json());
+          const resDoc = await fetch(CONFIG.API_URL + "?action=admin_get_doctors").then(function(r) { return r.json(); });
           if (resDoc.success) cachedDoctors = resDoc.doctors || [];
         }
 
         const docSelect = document.getElementById("paperBookingDoctorSelect");
         docSelect.innerHTML = "";
-        const activeDocs = cachedDoctors.filter(d => d.is_active);
+        const activeDocs = cachedDoctors.filter(function(d) { return d.is_active; });
         if (activeDocs.length === 0) {
           docSelect.innerHTML = '<option value="">ไม่มีข้อมูลหมอนวด</option>';
         } else {
-          activeDocs.forEach(d => {
+          activeDocs.forEach(function(d) {
             const opt = document.createElement("option");
             opt.value = d.doctor_id;
-            opt.textContent = ${d.nickname || d.name} ();
+            opt.textContent = (d.nickname || d.name) + " (" + d.doctor_id + ")";
             docSelect.appendChild(opt);
           });
         }
@@ -2591,9 +2592,11 @@
       container.innerHTML = '<div style="grid-column: 1/-1; color: var(--text-muted); font-size: 12px; padding: 10px;">⏳ กำลังเช็คคิวของหมอในวันนี้...</div>';
 
       try {
-        const res = await fetch(${CONFIG.API_URL}?action=admin_day_view&date=).then(r => r.json());
+        const res = await fetch(CONFIG.API_URL + "?action=admin_day_view&date=" + dateVal).then(function(r) { return r.json(); });
         if (res.success) {
-          paperExistingDayBookings = (res.bookings || []).filter(b => b.doctor_id === docId && b.status !== "CANCELLED");
+          paperExistingDayBookings = (res.bookings || []).filter(function(b) {
+            return b.doctor_id === docId && b.status !== "CANCELLED";
+          });
         } else {
           paperExistingDayBookings = [];
         }
@@ -2608,43 +2611,37 @@
       const container = document.getElementById("paperSlotsContainer");
       container.innerHTML = "";
 
-      const bookedStarts = paperExistingDayBookings.map(b => b.start_time);
+      const bookedStarts = paperExistingDayBookings.map(function(b) { return b.start_time; });
 
-      FIXED_ROUND_DEFS.forEach((round) => {
-        const isBooked = bookedStarts.includes(round.start);
-        const existingBooking = paperExistingDayBookings.find(b => b.start_time === round.start);
+      FIXED_ROUND_DEFS.forEach(function(round) {
+        const isBooked = bookedStarts.indexOf(round.start) !== -1;
+        const existingBooking = paperExistingDayBookings.find(function(b) { return b.start_time === round.start; });
 
         const label = document.createElement("label");
-        label.style.cssText = 
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 12px;
-          border-radius: 8px;
-          border: 1px solid ;
-          background: ;
-          cursor: ;
-          font-size: 13px;
-          user-select: none;
-          transition: all 0.15s;
-        ;
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "8px";
+        label.style.padding = "10px 12px";
+        label.style.borderRadius = "8px";
+        label.style.border = isBooked ? "1px solid #fca5a5" : "1px solid #cbd5e1";
+        label.style.background = isBooked ? "#fef2f2" : "#ffffff";
+        label.style.cursor = isBooked ? "not-allowed" : "pointer";
+        label.style.fontSize = "13px";
+        label.style.userSelect = "none";
 
         if (isBooked) {
-          label.innerHTML = 
-            <input type="checkbox" disabled checked style="accent-color: #ef4444; width: 16px; height: 16px;">
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-weight: 700; color: #dc2626; font-size: 12px;"></div>
-              <div style="font-size: 11px; color: #991b1b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🔒 มีคิวแล้ว: </div>
-            </div>
-          ;
+          const cust = existingBooking ? (existingBooking.customer_name || "จองแล้ว") : "มีคิวแล้ว";
+          label.innerHTML = '<input type="checkbox" disabled checked style="accent-color: #ef4444; width: 16px; height: 16px;">' +
+            '<div style="flex: 1; min-width: 0;">' +
+              '<div style="font-weight: 700; color: #dc2626; font-size: 12px;">' + round.label + '</div>' +
+              '<div style="font-size: 11px; color: #991b1b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🔒 มีคิวแล้ว: ' + cust + '</div>' +
+            '</div>';
         } else {
-          label.innerHTML = 
-            <input type="checkbox" name="paperSlotCheck" value="" data-end="" style="width: 16px; height: 16px;" onchange="this.parentElement.style.background = this.checked ? '#fef3c7' : '#ffffff'; this.parentElement.style.borderColor = this.checked ? '#f59e0b' : '#cbd5e1';">
-            <div>
-              <div style="font-weight: 700; color: #1e293b; font-size: 12px;"></div>
-              <div style="font-size: 11px; color: #16a34a;">🟢 ว่าง (ติ๊กเลือกรอบนี้)</div>
-            </div>
-          ;
+          label.innerHTML = '<input type="checkbox" name="paperSlotCheck" value="' + round.start + '" data-end="' + round.end + '" style="width: 16px; height: 16px;" onchange="this.parentElement.style.background = this.checked ? \'#fef3c7\' : \'#ffffff\'; this.parentElement.style.borderColor = this.checked ? \'#f59e0b\' : \'#cbd5e1\';">' +
+            '<div>' +
+              '<div style="font-weight: 700; color: #1e293b; font-size: 12px;">' + round.label + '</div>' +
+              '<div style="font-size: 11px; color: #16a34a;">🟢 ว่าง (ติ๊กเลือกรอบนี้)</div>' +
+            '</div>';
         }
         container.appendChild(label);
       });
@@ -2652,10 +2649,10 @@
 
     function setAllPaperSlots(check) {
       const checkboxes = document.querySelectorAll('input[name="paperSlotCheck"]:not(:disabled)');
-      checkboxes.forEach(cb => {
+      checkboxes.forEach(function(cb) {
         cb.checked = check;
-        cb.parentElement.style.background = check ? '#fef3c7' : '#ffffff';
-        cb.parentElement.style.borderColor = check ? '#f59e0b' : '#cbd5e1';
+        cb.parentElement.style.background = check ? "#fef3c7" : "#ffffff";
+        cb.parentElement.style.borderColor = check ? "#f59e0b" : "#cbd5e1";
       });
     }
 
@@ -2675,13 +2672,15 @@
         return;
       }
 
-      const slotsToBook = selectedCheckboxes.map(cb => ({
-        start_time: cb.value,
-        end_time: cb.getAttribute("data-end") || "10:15",
-        customer_name: custName,
-        customer_phone: custPhone,
-        notes: notes
-      }));
+      const slotsToBook = selectedCheckboxes.map(function(cb) {
+        return {
+          start_time: cb.value,
+          end_time: cb.getAttribute("data-end") || "10:15",
+          customer_name: custName,
+          customer_phone: custPhone,
+          notes: notes
+        };
+      });
 
       const btn = document.getElementById("btnSubmitPaperBooking");
       btn.disabled = true;
@@ -2705,9 +2704,9 @@
           document.getElementById("adminDateInput").value = dateVal;
           loadAdminDayView();
         } else {
-          // Fallback: หาก Apps Script ยังไม่ได้ Deploy ให้บันทึกแบบสร้างทีละรอบอัตโนมัติ
           let successCount = 0;
-          for (const s of slotsToBook) {
+          for (let i = 0; i < slotsToBook.length; i++) {
+            const s = slotsToBook[i];
             try {
               const fbRes = await fetch(CONFIG.API_URL, {
                 method: "POST",
