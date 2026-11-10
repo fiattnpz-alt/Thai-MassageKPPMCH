@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -38,17 +38,17 @@
       <div class="step-progress">
         <div class="step-item active" id="stepIndicator1">
           <div class="step-circle">1</div>
-          <span>บริการ</span>
+          <span>วัน & รอบเวลา</span>
         </div>
         <div class="step-line"></div>
         <div class="step-item" id="stepIndicator2">
           <div class="step-circle">2</div>
-          <span>วัน & หมอ</span>
+          <span>หมอนวด</span>
         </div>
         <div class="step-line"></div>
         <div class="step-item" id="stepIndicator3">
           <div class="step-circle">3</div>
-          <span>รอบเวลา</span>
+          <span>บริการ</span>
         </div>
         <div class="step-line"></div>
         <div class="step-item" id="stepIndicator4">
@@ -57,16 +57,8 @@
         </div>
       </div>
 
-      <!-- Step 1: Select Service -->
+      <!-- Step 1: Select Date & Time Slot (เลือกวัน และ รอบเวลา) -->
       <div class="view-content" id="step1View">
-        <h2 class="section-title">✨ เลือกบริการนวด / หัตถการ</h2>
-        <div class="services-list" id="servicesList">
-          <div style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายการบริการ...</div>
-        </div>
-      </div>
-
-      <!-- Step 2: Select Date & Doctor (เลือกวัน และดูหมอที่เข้าเวรในวันนั้น) -->
-      <div class="view-content" id="step2View" style="display: none;">
         <h2 class="section-title">📅 1. เลือกวันที่ต้องการนัดหมาย</h2>
         <div class="date-selector-wrapper">
           <label class="form-label">วันที่นัดหมาย:</label>
@@ -75,27 +67,38 @@
         </div>
 
         <div style="margin-top: 22px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <h2 class="section-title" style="margin: 0;">💆‍♂️ 2. หมอนวดที่เข้าเวรในวันนี้</h2>
-            <span id="onDutyCountBadge" style="font-size: 12px; background: #e0f2fe; color: #0284c7; padding: 2px 10px; border-radius: 12px; font-weight: 600;"></span>
+          <h2 class="section-title">⏰ 2. เลือกรอบเวลาที่ว่าง</h2>
+          <div id="slotStepSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+            กำลังตรวจสอบรอบเวลา...
           </div>
-          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-            ระบบแสดงเฉพาะหมอที่เข้าเวรในวันที่คุณเลือก และมีทักษะในบริการนี้ หรือเลือก "ใครก็ได้" เพื่อให้ระบบจัดสรรหมอที่ว่างให้ครับ
-          </p>
-          <div class="doctors-grid" id="doctorsGrid"></div>
+          <div class="slots-grid" id="slotsGrid">
+            <div style="grid-column: span 3; text-align: center; padding: 20px; font-size: 13px; color: var(--text-muted);">
+              กำลังโหลดรอบเวลาว่าง...
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Step 3: Select Time Slot (เลือกรอบเวลาว่าง) -->
-      <div class="view-content" id="step3View" style="display: none;">
-        <h2 class="section-title">⏰ เลือกรอบเวลาที่ว่างจริง</h2>
-        <div id="slotStepSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-          กำลังโหลดรอบเวลา...
+      <!-- Step 2: Select Doctor (เลือกหมอนวด) -->
+      <div class="view-content" id="step2View" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h2 class="section-title" style="margin: 0;">💆‍♂️ เลือกหมอนวดในรอบเวลาที่เลือก</h2>
+          <span id="onDutyCountBadge" style="font-size: 12px; background: #e0f2fe; color: #0284c7; padding: 2px 10px; border-radius: 12px; font-weight: 600;"></span>
         </div>
-        <div class="slots-grid" id="slotsGrid">
-          <div style="grid-column: span 3; text-align: center; padding: 20px; font-size: 13px; color: var(--text-muted);">
-            กำลังโหลดรอบเวลาว่าง...
-          </div>
+        <div id="doctorStepSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+          กำลังโหลดหมอนวด...
+        </div>
+        <div class="doctors-grid" id="doctorsGrid"></div>
+      </div>
+
+      <!-- Step 3: Select Service (เลือกบริการ) -->
+      <div class="view-content" id="step3View" style="display: none;">
+        <h2 class="section-title">✨ เลือกบริการนวด / หัตถการ</h2>
+        <div id="serviceStepSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+          เลือกบริการที่ต้องการ
+        </div>
+        <div class="services-list" id="servicesList">
+          <div style="text-align: center; padding: 30px; color: var(--text-muted);">กำลังโหลดรายการบริการ...</div>
         </div>
       </div>
 
