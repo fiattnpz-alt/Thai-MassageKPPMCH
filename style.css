@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
   --primary: #1e4d3a;
@@ -602,4 +602,175 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+
+/* Interactive Mini Calendar Widget */
+.calendar-widget {
+  background: #ffffff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-month-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.calendar-nav-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.calendar-nav-btn:hover {
+  background: #e2e8f0;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.calendar-weekdays div {
+  padding: 4px 0;
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #f8fafc;
+  user-select: none;
+}
+
+.cal-day-cell:hover:not(.disabled) {
+  border-color: var(--primary);
+  background: #f0fdf4;
+}
+
+.cal-day-cell.selected {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary-dark) !important;
+  box-shadow: 0 2px 6px rgba(45, 106, 79, 0.3);
+}
+
+.cal-day-cell.today {
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+.cal-day-cell.disabled {
+  background: #ffffff;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.cal-day-cell.empty {
+  background: transparent;
+  cursor: default;
+  border: none;
+}
+
+/* 4 Fixed Round Slots UI */
+.fixed-rounds-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.round-slot-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.round-slot-card:hover:not(.disabled) {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+.round-slot-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.15);
+}
+
+.round-slot-card.disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.round-slot-time {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 4px;
+}
+
+.round-slot-card.selected .round-slot-time {
+  color: var(--primary);
+}
+
+.round-slot-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.round-slot-badge.available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.round-slot-badge.full {
+  background: #fee2e2;
+  color: #b91c1c;
 }

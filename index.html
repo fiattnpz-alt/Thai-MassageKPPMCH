@@ -57,24 +57,40 @@
         </div>
       </div>
 
-      <!-- Step 1: Select Date & Time Slot (เลือกวัน และ รอบเวลา) -->
+      <!-- Step 1: Select Date & Time Slot (ปฏิทิน 1-30 วัน และ 4 รอบเวลา) -->
       <div class="view-content" id="step1View">
         <h2 class="section-title">📅 1. เลือกวันที่ต้องการนัดหมาย</h2>
-        <div class="date-selector-wrapper">
-          <label class="form-label">วันที่นัดหมาย:</label>
-          <input type="date" class="input-date" id="bookingDateInput" onchange="onDateChanged()">
-          <div id="dateDisplayLabel" style="margin-top: 8px; font-size: 13px; color: var(--primary); font-weight: 600;"></div>
+        
+        <!-- ปฏิทินแสดงวัน 1-30 ให้จิ้มเลือกได้ทันที -->
+        <div class="calendar-widget">
+          <div class="calendar-header">
+            <button type="button" class="calendar-nav-btn" onclick="changeCalMonth(-1)">◀ เดือนก่อน</button>
+            <span class="calendar-month-title" id="calMonthTitle">เดือน พ.ศ.</span>
+            <button type="button" class="calendar-nav-btn" onclick="changeCalMonth(1)">เดือนถัดไป ▶</button>
+          </div>
+          <div class="calendar-weekdays">
+            <div style="color: #ef4444;">อา</div>
+            <div>จ</div>
+            <div>อ</div>
+            <div>พ</div>
+            <div>พฤ</div>
+            <div style="color: #3b82f6;">ศ</div>
+            <div style="color: #8b5cf6;">ส</div>
+          </div>
+          <div class="calendar-days-grid" id="calDaysGrid">
+            <!-- วันที่ 1-30 จะถูกเรนเดอร์ตรงนี้ -->
+          </div>
         </div>
 
-        <div style="margin-top: 22px;">
-          <h2 class="section-title">⏰ 2. เลือกรอบเวลาที่ว่าง</h2>
-          <div id="slotStepSubtext" style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-            กำลังตรวจสอบรอบเวลา...
-          </div>
-          <div class="slots-grid" id="slotsGrid">
-            <div style="grid-column: span 3; text-align: center; padding: 20px; font-size: 13px; color: var(--text-muted);">
-              กำลังโหลดรอบเวลาว่าง...
-            </div>
+        <div id="dateDisplayLabel" style="margin-bottom: 16px; font-size: 14px; color: var(--primary); font-weight: 700; background: #f0fdf4; padding: 10px 14px; border-radius: 8px; border: 1px solid #bbf7d0;"></div>
+
+        <div>
+          <h2 class="section-title">⏰ 2. เลือกรอบเวลา (4 รอบประจำวัน)</h2>
+          <p style="font-size: 12px; color: var(--text-muted); margin: -6px 0 12px 0;">
+            คลิกเลือกรอบเวลาเพื่อไปดูหมอนวดที่ว่างในรอบนั้น
+          </p>
+          <div class="fixed-rounds-grid" id="slotsGrid">
+            <!-- 4 รอบเวลาจะถูกเรนเดอร์ตรงนี้ -->
           </div>
         </div>
       </div>

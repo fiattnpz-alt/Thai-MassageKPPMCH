@@ -38,21 +38,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // กำหนดวันจองล่วงหน้า (ไม่ให้เลือกย้อนหลัง และเลือกได้สูงสุดตาม CONFIG)
 function initDateLimits() {
-  const dateInput = document.getElementById("bookingDateInput");
   const today = new Date();
   const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
   const minDate = `${yyyy}-${mm}-${dd}`;
-
-  const max = new Date();
-  max.setDate(today.getDate() + (CONFIG.MAX_ADVANCE_DAYS || 90));
-  const maxDate = `${max.getFullYear()}-${String(max.getMonth() + 1).padStart(2, '0')}-${String(max.getDate()).padStart(2, '0')}`;
-
-  dateInput.min = minDate;
-  dateInput.max = maxDate;
-  dateInput.value = minDate;
   bookingState.selectedDate = minDate;
+  calViewingMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const dateInput = document.getElementById("bookingDateInput");
+  if (dateInput) {
+    const max = new Date();
+    max.setDate(today.getDate() + (CONFIG.MAX_ADVANCE_DAYS || 30));
+    const maxDate = `${max.getFullYear()}-${String(max.getMonth() + 1).padStart(2, "0")}-${String(max.getDate()).padStart(2, "0")}`;
+    dateInput.min = minDate;
+    dateInput.max = maxDate;
+    dateInput.value = minDate;
+  }
 }
 
 // ==========================================================================
@@ -97,10 +98,10 @@ async function loadInitialData() {
   showLoading("กำลังโหลดข้อมูลบริการและหมอ...");
 
   if (!CONFIG.API_URL || CONFIG.API_URL.startsWith("ใส่_")) {
+    useMockData();
     hideLoading();
-    // ถ้ายังไม่ได้ใส่ API URL ใช้ข้อมูลตัวอย่างเพื่อให้เปิดดูดีไซน์ได้ทันที
+    renderCalendar();
     loadAvailableSlots();
-
     return;
   }
 
@@ -136,15 +137,20 @@ async function loadInitialData() {
 
       if (data.settings && data.settings.shop_name) {
         document.getElementById("shopTitle").textContent = data.settings.shop_name;
+      }
+      renderCalendar();
       loadAvailableSlots();
-
     } else {
       alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + data.error);
+      useMockData();
+      renderCalendar();
+      loadAvailableSlots();
     }
   } catch (err) {
     console.error("Fetch API Error:", err);
+    useMockData();
+    renderCalendar();
     loadAvailableSlots();
-
   } finally {
     hideLoading();
   }
@@ -229,8 +235,17 @@ function selectService(srv) {
 }
 
 // ==========================================================================
-// 5. การแสดงผล Step 1: เลือกวันที่ & รอบเวลา (Time Slots)
+// 5. ปฏิทินเลือกวัน (1-30 วัน) & 4 รอบเวลาคงที่ (Fixed 4 Rounds)
 // ==========================================================================
+let calViewingMonth = new Date(); // เดือนที่กำลังเปิดดูในปฏิทิน
+
+const FIXED_4_ROUNDS = [
+  { start_time: "09:00", end_time: "10:15", title: "รอบที่ 1", time_label: "09:00 - 10:15 น." },
+  { start_time: "10:30", end_time: "11:45", title: "รอบที่ 2", time_label: "10:30 - 11:45 น." },
+  { start_time: "13:00", end_time: "14:15", title: "รอบที่ 3", time_label: "13:00 - 14:15 น." },
+  { start_time: "14:30", end_time: "15:45", title: "รอบที่ 4", time_label: "14:30 - 15:45 น." }
+];
+
 function formatThaiDateWithDay(dateStr) {
   if (!dateStr) return "-";
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -242,16 +257,92 @@ function formatThaiDateWithDay(dateStr) {
   return `วัน${dayName}ที่ ${d} ${thaiMonths[m - 1]} ${thaiYear}`;
 }
 
-async function onDateChanged() {
-  const dateVal = document.getElementById("bookingDateInput").value;
-  if (!dateVal) return;
+function changeCalMonth(direction) {
+  calViewingMonth.setMonth(calViewingMonth.getMonth() + direction);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const grid = document.getElementById("calDaysGrid");
+  const monthTitle = document.getElementById("calMonthTitle");
+  if (!grid || !monthTitle) return;
+
+  const y = calViewingMonth.getFullYear();
+  const m = calViewingMonth.getMonth(); // 0-11
+  const thaiMonthsFull = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+  monthTitle.textContent = `${thaiMonthsFull[m]} ${y + 543}`;
+
+  grid.innerHTML = "";
+
+  const firstDayOfWeek = new Date(y, m, 1).getDay(); // 0 = Sunday
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+  // เซลล์ว่างก่อนวันแรกของเดือน
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    const empty = document.createElement("div");
+    empty.className = "cal-day-cell empty";
+    grid.appendChild(empty);
+  }
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const maxAdvance = CONFIG.MAX_ADVANCE_DAYS || 30;
+  const maxDateObj = new Date();
+  maxDateObj.setDate(maxDateObj.getDate() + maxAdvance);
+  const maxDateStr = maxDateObj.toISOString().split("T")[0];
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const cell = document.createElement("div");
+    cell.className = "cal-day-cell";
+    cell.textContent = day;
+
+    const isPast = dayStr < todayStr;
+    const isTooFar = dayStr > maxDateStr;
+
+    if (isPast || isTooFar) {
+      cell.classList.add("disabled");
+    } else {
+      if (dayStr === todayStr) cell.classList.add("today");
+      if (dayStr === bookingState.selectedDate) cell.classList.add("selected");
+      cell.onclick = () => selectCalendarDate(dayStr);
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+async function selectCalendarDate(dateVal) {
   bookingState.selectedDate = dateVal;
   bookingState.selectedSlot = null;
   bookingState.selectedDoctor = "ANY";
 
+  // Re-render calendar เพื่ออัปเดตสีวันที่ถูกเลือก
+  renderCalendar();
+
+  const dateDisplay = document.getElementById("dateDisplayLabel");
+  if (dateDisplay) {
+    dateDisplay.innerHTML = `📅 <b>วันที่เลือก:</b> ${formatThaiDateWithDay(dateVal)}`;
+  }
+
+  // โหลดรอบเวลา
+  await loadAvailableSlots();
+}
+
+async function loadAvailableSlots() {
+  const container = document.getElementById("slotsGrid");
+  const dateDisplay = document.getElementById("dateDisplayLabel");
+
+  if (dateDisplay) {
+    dateDisplay.innerHTML = `📅 <b>วันที่เลือก:</b> ${formatThaiDateWithDay(bookingState.selectedDate)}`;
+  }
+
+  if (!container) return;
+  container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-muted);">กำลังตรวจสอบรอบเวลา...</div>`;
+
+  const dateVal = bookingState.selectedDate;
   const monthStr = dateVal.slice(0, 7);
 
-  // 1. ตรวจสอบตารางเวร และ วันลา จาก LocalStorage ก่อนเป็นอันดับแรกเพื่อ Sync กับแอดมินทันที
+  // 1. ตรวจสอบตารางเวร และ วันลา จาก LocalStorage ก่อนเป็นอันดับแรก
   try {
     const storedRosters = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
     if (storedRosters[monthStr]) {
@@ -263,113 +354,95 @@ async function onDateChanged() {
     }
   } catch (e) {}
 
-  // 2. ถ้าในแคชยังไม่มีเดือนนี้ หรือต้องการอัปเดตวันลาล่าสุดจาก API
-  let isMonthCached = false;
-  for (const k in monthlyRosterCache) {
-    if (k.startsWith(monthStr)) { isMonthCached = true; break; }
-  }
-
+  // 2. ดึงข้อมูลตารางเวรและรอบเวลาจาก API
+  let fetchedSlots = [];
   if (CONFIG.API_URL && !CONFIG.API_URL.startsWith("ใส่_")) {
     try {
-      const promises = [];
-      if (!isMonthCached) {
-        promises.push(fetch(`${CONFIG.API_URL}?action=get_monthly_roster&month=${monthStr}`).then(r => r.json()));
-      }
-      promises.push(fetch(`${CONFIG.API_URL}?action=get_leaves`).then(r => r.json()).catch(() => null));
-
-      const [resRoster, resLeaves] = await Promise.all(promises);
+      const srvParam = (servicesData && servicesData[0]) ? servicesData[0].service_id : "";
+      const [resSlots, resRoster] = await Promise.all([
+        fetch(`${CONFIG.API_URL}?action=get_slots&date=${dateVal}&service_id=${srvParam}&doctor_id=ANY`).then(r => r.json()).catch(() => null),
+        fetch(`${CONFIG.API_URL}?action=get_monthly_roster&month=${monthStr}`).then(r => r.json()).catch(() => null)
+      ]);
 
       if (resRoster && resRoster.success && resRoster.roster) {
         Object.assign(monthlyRosterCache, resRoster.roster);
-        try {
-          const stored = JSON.parse(localStorage.getItem("CLINIC_MONTHLY_ROSTERS") || "{}");
-          stored[monthStr] = resRoster.roster;
-          localStorage.setItem("CLINIC_MONTHLY_ROSTERS", JSON.stringify(stored));
-        } catch (e) {}
       }
-
-      if (resLeaves && resLeaves.success && resLeaves.leaves) {
-        doctorLeavesData = resLeaves.leaves;
-        try {
-          localStorage.setItem("CLINIC_DOCTOR_LEAVES", JSON.stringify(resLeaves.leaves));
-        } catch (e) {}
+      if (resSlots && resSlots.success && Array.isArray(resSlots.slots)) {
+        fetchedSlots = resSlots.slots;
       }
-    } catch (e) {}
-  }
-
-  await loadAvailableSlots();
-}
-
-async function loadAvailableSlots() {
-  const container = document.getElementById("slotsGrid");
-  const subtext = document.getElementById("slotStepSubtext");
-  const dateDisplay = document.getElementById("dateDisplayLabel");
-
-  if (dateDisplay) {
-    dateDisplay.textContent = `📅 ${formatThaiDateWithDay(bookingState.selectedDate)}`;
-  }
-
-  if (subtext) {
-    subtext.innerHTML = `📅 <b>วันที่:</b> ${formatThaiDateWithDay(bookingState.selectedDate)} &nbsp;|&nbsp; เลือกรอบเวลาที่ท่านสะดวก`;
-  }
-
-  container.innerHTML = `<div style="grid-column: span 3; text-align: center; padding: 20px; color: var(--text-muted);">กำลังตรวจสอบรอบเวลาว่าง...</div>`;
-
-  if (!CONFIG.API_URL || CONFIG.API_URL.startsWith("ใส่_")) {
-    renderMockSlots();
-    return;
-  }
-
-  try {
-    const srvParam = bookingState.selectedService ? bookingState.selectedService.service_id : (servicesData[0] ? servicesData[0].service_id : "");
-    const url = `${CONFIG.API_URL}?action=get_slots&date=${bookingState.selectedDate}&service_id=${srvParam}&doctor_id=ANY`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (data.success && data.slots && data.slots.length > 0) {
-      activeSlots = data.slots;
-      renderSlots(activeSlots);
-    } else {
-      container.innerHTML = `<div style="grid-column: span 3; text-align: center; padding: 24px; color: #c5221f;">ขออภัย ไม่มีรอบเวลาว่างในวันนี้ กรุณาเปลี่ยนวันที่นัดหมายด้านบนครับ</div>`;
-      document.getElementById("btnNext").disabled = true;
+    } catch (e) {
+      console.warn("Slots fetch warning:", e);
     }
-  } catch (err) {
-    console.error("Slots Error:", err);
-    renderMockSlots();
   }
+
+  // รวม 4 รอบเวลาคงที่เข้ากับข้อมูลแพทย์ที่ว่าง
+  activeSlots = FIXED_4_ROUNDS.map(round => {
+    const match = fetchedSlots.find(s => s.start_time === round.start_time);
+    if (match) {
+      return {
+        ...round,
+        available_doctors: match.available_doctors || []
+      };
+    } else {
+      // Mock / Local calculation
+      const [y, m, d] = dateVal.split("-").map(Number);
+      const dayOfWeek = new Date(y, m - 1, d).getDay();
+      const dutyDocIds = monthlyRosterCache[dateVal] || null;
+      const freeDocs = doctorsData.filter(doc => {
+        if (doc.is_active === false || String(doc.is_active).toUpperCase() === "FALSE") return false;
+        // เช็ควันลา
+        const onLeave = doctorLeavesData.some(l => l.doctor_id === doc.doctor_id && String(l.leave_date || "").startsWith(dateVal));
+        if (onLeave) return false;
+        // เช็คตารางเวร
+        if (dutyDocIds !== null) {
+          return dutyDocIds.includes(doc.doctor_id);
+        } else {
+          return String(doc.work_days || "").split(",").map(s => parseInt(String(s).trim(), 10)).includes(dayOfWeek);
+        }
+      });
+
+      return {
+        ...round,
+        available_doctors: freeDocs.map(d => ({ id: d.doctor_id, name: d.nickname || d.name }))
+      };
+    }
+  });
+
+  renderFixedRounds(activeSlots);
 }
 
-function renderMockSlots() {
-  activeSlots = [
-    { start_time: "09:00", end_time: "10:15", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] },
-    { start_time: "10:30", end_time: "11:45", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }, { id: "DOC-002", name: "หมอบุญชู" }] },
-    { start_time: "13:00", end_time: "14:15", available_doctors: [{ id: "DOC-002", name: "หมอบุญชู" }] },
-    { start_time: "14:30", end_time: "15:45", available_doctors: [{ id: "DOC-001", name: "หมอสมศรี" }] }
-  ];
-  renderSlots(activeSlots);
-}
-
-function renderSlots(slots) {
+function renderFixedRounds(slots) {
   const container = document.getElementById("slotsGrid");
   container.innerHTML = "";
 
   slots.forEach(slot => {
-    const item = document.createElement("div");
+    const docCount = slot.available_doctors ? slot.available_doctors.length : 0;
+    const isAvailable = docCount > 0;
     const isSelected = bookingState.selectedSlot && bookingState.selectedSlot.start_time === slot.start_time;
-    item.className = `slot-item ${isSelected ? 'selected' : ''}`;
-    item.onclick = () => selectSlot(slot);
 
-    item.innerHTML = `
-      <div class="slot-time">${slot.start_time} - ${slot.end_time || ''}</div>
-      <div class="slot-doc-count">${slot.available_doctors ? slot.available_doctors.length : 0} ท่านว่าง</div>
+    const card = document.createElement("div");
+    card.className = `round-slot-card ${isSelected ? 'selected' : ''} ${!isAvailable ? 'disabled' : ''}`;
+
+    if (!isAvailable) {
+      card.onclick = () => alert(`⚠️ ขออภัยครับ รอบเวลา ${slot.time_label} ไม่มีหมอนวดว่างในวันที่เลือกครับ`);
+    } else {
+      card.onclick = () => selectRoundSlot(slot);
+    }
+
+    card.innerHTML = `
+      <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">${slot.title}</div>
+      <div class="round-slot-time">${slot.time_label}</div>
+      <span class="round-slot-badge ${isAvailable ? 'available' : 'full'}">
+        ${isAvailable ? `🟢 ว่าง (${docCount} ท่าน)` : '⛔ เต็มทุกคิว'}
+      </span>
     `;
-    container.appendChild(item);
+    container.appendChild(card);
   });
 }
 
-function selectSlot(slot) {
+function selectRoundSlot(slot) {
   bookingState.selectedSlot = slot;
-  renderSlots(activeSlots);
+  renderFixedRounds(activeSlots);
   document.getElementById("btnNext").disabled = false;
 }
 
