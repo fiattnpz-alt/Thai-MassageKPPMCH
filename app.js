@@ -45,15 +45,6 @@ function initDateLimits() {
   const minDate = `${yyyy}-${mm}-${dd}`;
   bookingState.selectedDate = minDate;
   calViewingMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const dateInput = document.getElementById("bookingDateInput");
-  if (dateInput) {
-    const max = new Date();
-    max.setDate(today.getDate() + (CONFIG.MAX_ADVANCE_DAYS || 30));
-    const maxDate = `${max.getFullYear()}-${String(max.getMonth() + 1).padStart(2, "0")}-${String(max.getDate()).padStart(2, "0")}`;
-    dateInput.min = minDate;
-    dateInput.max = maxDate;
-    dateInput.value = minDate;
-  }
 }
 
 // ==========================================================================
@@ -121,18 +112,18 @@ async function loadInitialData() {
         for (const m in stored) {
           Object.assign(monthlyRosterCache, stored[m]);
         }
-      } catch (e) {}
+      } catch (e) { }
 
       // ดึงข้อมูลวันลาของหมอนวดจาก Server และ LocalStorage
       if (data.leaves && Array.isArray(data.leaves)) {
         doctorLeavesData = data.leaves;
         try {
           localStorage.setItem("CLINIC_DOCTOR_LEAVES", JSON.stringify(data.leaves));
-        } catch (e) {}
+        } catch (e) { }
       } else {
         try {
           doctorLeavesData = JSON.parse(localStorage.getItem("CLINIC_DOCTOR_LEAVES") || "[]");
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (data.settings && data.settings.shop_name) {
@@ -284,11 +275,8 @@ function renderCalendar() {
     grid.appendChild(empty);
   }
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const maxAdvance = CONFIG.MAX_ADVANCE_DAYS || 30;
-  const maxDateObj = new Date();
-  maxDateObj.setDate(maxDateObj.getDate() + maxAdvance);
-  const maxDateStr = maxDateObj.toISOString().split("T")[0];
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dayStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -297,9 +285,8 @@ function renderCalendar() {
     cell.textContent = day;
 
     const isPast = dayStr < todayStr;
-    const isTooFar = dayStr > maxDateStr;
 
-    if (isPast || isTooFar) {
+    if (isPast) {
       cell.classList.add("disabled");
     } else {
       if (dayStr === todayStr) cell.classList.add("today");
@@ -352,7 +339,7 @@ async function loadAvailableSlots() {
     if (storedLeaves && storedLeaves.length > 0) {
       doctorLeavesData = storedLeaves;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 2. ดึงข้อมูลตารางเวรและรอบเวลาจาก API
   let fetchedSlots = [];
@@ -599,7 +586,7 @@ function renderOffDutyCards(container, offDutyDocs) {
   offDutyDocs.forEach(({ doc, worksOnDay, isSlotAvailable, isOnLeave, leaveReason }) => {
     const card = document.createElement("div");
     card.className = "doctor-card disabled";
-    
+
     let reasonText = "⛔ ไม่ว่างในรอบนี้";
     let badgeClass = "off";
     let alertMsg = "";
